@@ -1,19 +1,24 @@
 import Button from '@/components/ui/button';
 
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+
+import Link from 'next/link';
+import { useRouter } from 'next/router';
+
 export default function Home() {
+  const router = useRouter();
+  const baseURL = router.pathname;
+
   return (
     <>
-      <div className="flex w-1/2 flex-col">
-        <div className="flex flex-row justify-between">
-          <h1 className="text-center text-2xl font-bold tracking-tighter">
-            My Chatbots
-          </h1>
-          <Button variant={'plain'} loading={false}>
-            Upload
-          </Button>
-        </div>
-        <div></div>
-      </div>
+      <div className="text-bold text-center text-3xl">HOME</div>
     </>
   );
 }
