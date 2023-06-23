@@ -1,4 +1,4 @@
-import Button from '@/components/ui/button';
+import Button from '@/components/ui/buttoneEx';
 
 import {
   Card,
@@ -33,7 +33,7 @@ export default function Chatbots() {
           <Link key={`project-card-${1}`} href={`${baseURL}/${1}`}>
             <Card>
               <CardContent className="p-0">
-                <img src="/chatbot.png" />
+                <img src="/chatbot.png" className="rounded-t-lg" />
               </CardContent>
               <CardFooter className="select-none p-2">
                 <p className="grow text-center">Chatbot1</p>
@@ -43,10 +43,10 @@ export default function Chatbots() {
           <Link key={`project-card-${2}`} href={`${baseURL}/${2}`}>
             <Card>
               <CardContent className="p-0">
-                <img src="/chatbot.png" />
+                <img src="/chatbot.png" className="rounded-t-lg" />
               </CardContent>
               <CardFooter className="select-none p-2">
-                <p className="grow text-center">Chatbot1</p>
+                <p className="grow text-center">Chatbot2</p>
               </CardFooter>
             </Card>
           </Link>
