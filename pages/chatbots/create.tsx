@@ -1,5 +1,4 @@
-import { useCallback, useState } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { FC, useCallback, useState, useEffect } from 'react';
 
 import {
   Card,
@@ -10,18 +9,46 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 
+import cn from 'classnames';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Button from '@/components/ui/buttoneEx';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 import { FileData } from '@/types/types';
-const CreateChatbot = () => {
+import { pluralize } from '@/lib/utils';
+import toast from 'react-hot-toast';
+import { createChatbot } from '@/lib/api';
+
+const CreateChatbot: FC = () => {
+  const MAX_FILES = 5;
   const [loading, setLoading] = useState<boolean>(false);
-  const [pickedFiles, setPickFiles] = useState<FileData[]>([]);
+  const [pickedFiles, setPickFiles] = useState<FileList | null>();
 
-  const createChatbot = useCallback(async () => {}, [pickedFiles]);
+  const handleClick = useCallback(async () => {
+    setLoading(true);
+    try {
+      const newChatbot = await createChatbot('CHATPDF');
+      setLoading(false);
+      console.log(newChatbot);
+    } catch (error) {
+      setLoading(false);
+      console.log('Error', error);
+    }
+  }, [pickedFiles]);
 
-  const hasFiles = pickedFiles?.length > 0;
+  const hasFiles = pickedFiles?.length || 0;
+
+  const handleFileEvent = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files: FileList | null = event.target.files;
+    const fileLength = files?.length || 0;
+    if (fileLength > MAX_FILES) {
+      toast.error(`You can only add a maximum of ${MAX_FILES} files`);
+      return;
+    }
+    setPickFiles(files);
+  };
+
   return (
     <>
       <div className="mx-auto w-1/2">
@@ -36,9 +63,23 @@ const CreateChatbot = () => {
             </TabsList>
             <TabsContent value="files">
               <Card>
-                <CardHeader>
-                  <CardTitle>Files</CardTitle>
-                  <CardDescription>Files Description</CardDescription>
+                <CardHeader className="text-center ">
+                  <CardTitle>Upload File</CardTitle>
+                  <CardDescription>
+                    NOTE: Uploading a PDF using safari doesn't work, we're
+                    looking into the issue.
+                    <br /> Make sure the text is OCR, i.e. you can copy it.
+                  </CardDescription>
+                  <CardContent>
+                    <div className="mt-4 w-full">
+                      <Input
+                        type="file"
+                        accept="application/pdf"
+                        onChange={handleFileEvent}
+                        multiple
+                      />
+                    </div>
+                  </CardContent>
                 </CardHeader>
               </Card>
             </TabsContent>
@@ -77,7 +118,13 @@ const CreateChatbot = () => {
                 <p className="text-bold text-lg">Included Sources</p>
               </CardTitle>
               <CardDescription>
-                {/* <p className="text-sm">1 File(s) (22,924 chars)</p> */}
+                <p className={cn('text-sm', { hidden: !hasFiles })}>
+                  {`${pluralize(
+                    pickedFiles?.length || 0,
+                    'file',
+                    'files',
+                  )} added`}
+                </p>
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -85,8 +132,8 @@ const CreateChatbot = () => {
                 className="w-full"
                 variant={hasFiles ? 'glow' : 'plain'}
                 loading={loading}
-                loadingMessage="Creating..."
-                onClick={createChatbot}
+                loadingMessage="creando..."
+                onClick={handleClick}
               >
                 Create Chatbot
               </Button>

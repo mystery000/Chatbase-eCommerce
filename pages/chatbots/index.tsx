@@ -25,7 +25,7 @@ export default function Chatbots() {
           </h1>
           <Link href={`${baseURL}/create`}>
             <Button variant={'plain'} loading={false}>
-              Upload
+              Create Chatbot
             </Button>
           </Link>
         </div>
