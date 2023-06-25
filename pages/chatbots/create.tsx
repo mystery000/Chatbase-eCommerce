@@ -26,13 +26,17 @@ const CreateChatbot: FC = () => {
   const MAX_FILES = 5;
   const router = useRouter();
   const [loading, setLoading] = useState<boolean>(false);
-  const [pickedFiles, setPickFiles] = useState<FileList | null>();
+  const [pickedFiles, setPickFiles] = useState<File[]>([]);
   const { chatbots, mutate: mutateChatbots } = useChatbots();
 
   const handleClick = useCallback(async () => {
     setLoading(true);
     try {
-      const newChatbot = await createChatbot('CHATPDF');
+      if (!pickedFiles) {
+        toast.error('No files selected');
+        return;
+      }
+      const newChatbot = await createChatbot('CHATPDF', pickedFiles);
       await mutateChatbots([...(chatbots || []), newChatbot]);
       setLoading(false);
       toast.success('Chatbot created successfully.');
@@ -48,7 +52,7 @@ const CreateChatbot: FC = () => {
   const hasFiles = pickedFiles?.length || 0;
 
   const handleFileEvent = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files: FileList | null = event.target.files;
+    const files = Array.from(event.target.files || []);
     const fileLength = files?.length || 0;
     if (fileLength > MAX_FILES) {
       toast.error(`You can only add a maximum of ${MAX_FILES} files`);

@@ -1,4 +1,4 @@
-import { BAD_METHOD, ERROR, SUCCESS } from '@/config/HttpStatus';
+import { BAD_METHOD, BAD_REQUEST, ERROR, SUCCESS } from '@/config/HttpStatus';
 import excuteQuery from '@/lib/database';
 import { Chatbot } from '@/types/database';
 import { NextApiRequest, NextApiResponse } from 'next';
@@ -37,8 +37,12 @@ export default async function handler(
     const { name } = req.body;
     const chatbot_id = uuidv4();
     const created_at = new Date();
-    //validation
 
+    if (!name) {
+      return res
+        .status(BAD_REQUEST)
+        .json({ error: 'The request body has no chatbot name' });
+    }
     //pinecone
 
     try {
