@@ -22,10 +22,23 @@ export default async function handler(
   // Unauthorized
 
   if (req.method === 'GET') {
+    try {
+      const chatbots = await excuteQuery({
+        query: 'SELECT * FROM chatbots',
+        values: [],
+      });
+      return res.status(SUCCESS).json(chatbots || []);
+    } catch (error) {
+      return res
+        .status(ERROR)
+        .json({ error: `Internal Server Error: due to ${error}` });
+    }
   } else if (req.method === 'POST') {
     const { name } = req.body;
     const chatbot_id = uuidv4();
     const created_at = new Date();
+    //validation
+
     //pinecone
 
     try {

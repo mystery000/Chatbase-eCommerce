@@ -27,3 +27,11 @@ export const getResponseOrThrow = async <T>(res: Response): Promise<T> => {
   }
   return res.json();
 };
+
+export const fetcher = async <T = any>(
+  input: RequestInfo,
+  init?: RequestInit,
+): Promise<T> => {
+  const res = await fetch(input, init);
+  return getResponseOrThrow(res);
+};

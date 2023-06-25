@@ -19,18 +19,26 @@ import { FileData } from '@/types/types';
 import { pluralize } from '@/lib/utils';
 import toast from 'react-hot-toast';
 import { createChatbot } from '@/lib/api';
+import useChatbots from '@/lib/hooks/use-chatbots';
+import { useRouter } from 'next/router';
 
 const CreateChatbot: FC = () => {
   const MAX_FILES = 5;
+  const router = useRouter();
   const [loading, setLoading] = useState<boolean>(false);
   const [pickedFiles, setPickFiles] = useState<FileList | null>();
+  const { chatbots, mutate: mutateChatbots } = useChatbots();
 
   const handleClick = useCallback(async () => {
     setLoading(true);
     try {
       const newChatbot = await createChatbot('CHATPDF');
+      await mutateChatbots([...(chatbots || []), newChatbot]);
       setLoading(false);
-      console.log(newChatbot);
+      toast.success('Chatbot created successfully.');
+      setTimeout(() => {
+        router.push('/chatbots');
+      }, 500);
     } catch (error) {
       setLoading(false);
       console.log('Error', error);

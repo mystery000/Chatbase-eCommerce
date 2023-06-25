@@ -1,26 +1,19 @@
+import ChatbotCard from '@/components/chatbots/ChatbotCard';
 import Button from '@/components/ui/buttoneEx';
-
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-
+import useChatbots from '@/lib/hooks/use-chatbots';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 
 export default function Chatbots() {
   const router = useRouter();
+  const { chatbots, loading, mutate } = useChatbots();
   const baseURL = router.pathname;
 
   return (
     <>
-      <div className="mx-auto mt-4 flex w-1/2 flex-col gap-12">
+      <div className="mx-auto mt-4 flex w-4/5 flex-col gap-12">
         <div className="flex flex-row justify-between">
-          <h1 className="grow text-center text-3xl font-bold tracking-tighter">
+          <h1 className="grow text-2xl font-extrabold text-black md:text-3xl">
             My Chatbots
           </h1>
           <Link href={`${baseURL}/create`}>
@@ -29,27 +22,13 @@ export default function Chatbots() {
             </Button>
           </Link>
         </div>
-        <div className="flex flex-wrap items-center justify-start gap-4">
-          <Link key={`project-card-${1}`} href={`${baseURL}/${1}`}>
-            <Card>
-              <CardContent className="p-0">
-                <img src="/chatbot.png" className="rounded-t-lg" />
-              </CardContent>
-              <CardFooter className="select-none p-2">
-                <p className="grow text-center">Chatbot1</p>
-              </CardFooter>
-            </Card>
-          </Link>
-          <Link key={`project-card-${2}`} href={`${baseURL}/${2}`}>
-            <Card>
-              <CardContent className="p-0">
-                <img src="/chatbot.png" className="rounded-t-lg" />
-              </CardContent>
-              <CardFooter className="select-none p-2">
-                <p className="grow text-center">Chatbot2</p>
-              </CardFooter>
-            </Card>
-          </Link>
+        <div className="flex flex-wrap justify-between gap-4">
+          {chatbots?.map((chatbot) => (
+            <ChatbotCard
+              key={`chatbot-card-${chatbot.chatbot_id}`}
+              chatbot={chatbot}
+            />
+          ))}
         </div>
       </div>
     </>
