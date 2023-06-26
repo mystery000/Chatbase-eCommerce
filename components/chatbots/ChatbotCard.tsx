@@ -33,7 +33,7 @@ const ChatbotCard: FC<ChatbotProps> = ({ chatbot }) => {
           />
         </CardContent>
         <CardFooter className="select-none p-2">
-          <p className="grow text-center">{chatbot.name}</p>
+          <p className="w-8 grow truncate text-center">{chatbot.name}</p>
         </CardFooter>
       </Card>
     </Link>
