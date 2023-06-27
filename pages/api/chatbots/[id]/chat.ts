@@ -13,8 +13,6 @@ export default async function handler(
   const chatbot_id = req.query.id;
   const { question } = req.body;
 
-  console.log('question:', question);
-
   //only accept post requests
   if (req.method !== 'POST') {
     res.status(BAD_METHOD).json({ error: 'Method not allowed' });

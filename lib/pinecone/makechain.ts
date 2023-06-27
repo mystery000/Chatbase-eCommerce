@@ -21,13 +21,18 @@ Question: {question}
 Helpful answer in markdown:`;
 
 export const makeChain = (vectorstore: PineconeStore) => {
-  const model = new ChatOpenAI({
-    temperature: 0.1, // increase temepreature to get more creative answers
+  const GPT3 = new ChatOpenAI({
+    temperature: 0, // increase temepreature to get more creative answers
     modelName: 'gpt-3.5-turbo', //change this to gpt-4 if you have access
   });
 
+  const GPT4 = new ChatOpenAI({
+    temperature: 0.1, // increase temepreature to get more creative answers
+    modelName: 'gpt-4', //change this to gpt-4 if you have access
+  });
+
   const chain = ConversationalRetrievalQAChain.fromLLM(
-    model,
+    GPT3,
     vectorstore.asRetriever(),
     {
       qaTemplate: QA_PROMPT,
@@ -39,6 +44,9 @@ export const makeChain = (vectorstore: PineconeStore) => {
         outputKey: 'text', // The key for the final conversational output of the chain
         returnMessages: true, // If using with a chat model
       }),
+      questionGeneratorChainOptions: {
+        llm: GPT4,
+      },
     },
   );
   return chain;
