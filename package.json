@@ -36,6 +36,7 @@
     "react-dom": "18.2.0",
     "react-dropzone": "^14.2.3",
     "react-hot-toast": "^2.4.1",
+    "react-markdown": "^8.0.7",
     "serverless-mysql": "^1.5.5",
     "swr": "^2.2.0",
     "tailwind-merge": "^1.13.2",

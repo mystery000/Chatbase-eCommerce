@@ -2,7 +2,6 @@ import { BAD_METHOD, BAD_REQUEST, ERROR, SUCCESS } from '@/config/HttpStatus';
 import excuteQuery from '@/lib/mysql';
 import { Chatbot } from '@/types/database';
 import { NextApiRequest, NextApiResponse } from 'next';
-import { v4 as uuidv4 } from 'uuid';
 import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
 import { OpenAIEmbeddings } from 'langchain/embeddings/openai';
 import { PineconeStore } from 'langchain/vectorstores/pinecone';
@@ -10,7 +9,6 @@ import { pinecone } from '@/lib/pinecone/pinecone-client';
 import { PDFLoader } from 'langchain/document_loaders/fs/pdf';
 import { PINECONE_INDEX_NAME } from '@/config/pinecone';
 import { DirectoryLoader } from 'langchain/document_loaders/fs/directory';
-import { IncomingForm, File } from 'formidable';
 import { parseForm } from '@/lib/parse-form';
 
 type Data = { status?: string; error?: string } | Chatbot[] | Chatbot;

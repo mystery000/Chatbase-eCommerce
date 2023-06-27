@@ -32,11 +32,12 @@ const CreateChatbot: FC = () => {
   const handleClick = useCallback(async () => {
     setLoading(true);
     try {
-      if (!pickedFiles) {
+      if (!pickedFiles.length) {
         toast.error('No files selected');
+        setLoading(false);
         return;
       }
-      const newChatbot = await createChatbot('CHATPDF', pickedFiles);
+      const newChatbot = await createChatbot(pickedFiles[0].name, pickedFiles);
       await mutateChatbots([...(chatbots || []), newChatbot]);
       setLoading(false);
       toast.success('Chatbot created successfully.');
