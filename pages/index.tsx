@@ -1,13 +1,5 @@
+import NavbarLayout from '@/components/NavbarLayout';
 import Button from '@/components/ui/buttoneEx';
-
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
 
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -18,7 +10,9 @@ export default function Home() {
 
   return (
     <>
-      <div className="text-bold text-center text-3xl">HOME</div>
+      <NavbarLayout>
+        <div className="text-bold text-center text-3xl">HOME</div>
+      </NavbarLayout>
     </>
   );
 }

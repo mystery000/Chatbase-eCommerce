@@ -21,6 +21,7 @@ import toast from 'react-hot-toast';
 import { createChatbot } from '@/lib/api';
 import useChatbots from '@/lib/hooks/use-chatbots';
 import { useRouter } from 'next/router';
+import NavbarLayout from '@/components/NavbarLayout';
 
 const CreateChatbot: FC = () => {
   const MAX_FILES = 5;
@@ -64,96 +65,98 @@ const CreateChatbot: FC = () => {
 
   return (
     <>
-      <div className="mx-auto w-1/2">
-        <div className="m-4 text-center text-3xl font-bold">Data Sources</div>
-        <div>
-          <Tabs defaultValue="files">
-            <TabsList className="w-full gap-4">
-              <TabsTrigger value="files">Files</TabsTrigger>
-              <TabsTrigger value="testo">Text</TabsTrigger>
-              <TabsTrigger value="sitoweb">Website</TabsTrigger>
-              <TabsTrigger value="domande">Q&A</TabsTrigger>
-            </TabsList>
-            <TabsContent value="files">
-              <Card>
-                <CardHeader className="text-center ">
-                  <CardTitle>Upload File</CardTitle>
-                  <CardDescription>
-                    NOTE: Uploading a PDF using safari doesn't work, we're
-                    looking into the issue.
-                    <br /> Make sure the text is OCR, i.e. you can copy it.
-                  </CardDescription>
-                  <CardContent>
-                    <div className="mt-4 w-full">
-                      <Input
-                        type="file"
-                        accept="application/pdf"
-                        onChange={handleFileEvent}
-                        multiple
-                      />
-                    </div>
-                  </CardContent>
-                </CardHeader>
-              </Card>
-            </TabsContent>
-            <TabsContent value="testo">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Testo</CardTitle>
-                  <CardDescription>Text Description</CardDescription>
-                </CardHeader>
-              </Card>
-            </TabsContent>
-            <TabsContent value="sitoweb">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Website</CardTitle>
-                  <CardDescription>Website Description</CardDescription>
-                </CardHeader>
-              </Card>
-            </TabsContent>
-            <TabsContent value="domande">
-              <Card>
-                <CardHeader>
-                  <CardTitle>domanda e risposta</CardTitle>
-                  <CardDescription>
-                    Descrizione di domande e risposte
-                  </CardDescription>
-                </CardHeader>
-              </Card>
-            </TabsContent>
-          </Tabs>
+      <NavbarLayout>
+        <div className="mx-auto w-1/2">
+          <div className="m-4 text-center text-3xl font-bold">Data Sources</div>
+          <div>
+            <Tabs defaultValue="files">
+              <TabsList className="w-full gap-4">
+                <TabsTrigger value="files">Files</TabsTrigger>
+                <TabsTrigger value="testo">Text</TabsTrigger>
+                <TabsTrigger value="sitoweb">Website</TabsTrigger>
+                <TabsTrigger value="domande">Q&A</TabsTrigger>
+              </TabsList>
+              <TabsContent value="files">
+                <Card>
+                  <CardHeader className="text-center ">
+                    <CardTitle>Upload File</CardTitle>
+                    <CardDescription>
+                      NOTE: Uploading a PDF using safari doesn't work, we're
+                      looking into the issue.
+                      <br /> Make sure the text is OCR, i.e. you can copy it.
+                    </CardDescription>
+                    <CardContent>
+                      <div className="mt-4 w-full">
+                        <Input
+                          type="file"
+                          accept="application/pdf"
+                          onChange={handleFileEvent}
+                          multiple
+                        />
+                      </div>
+                    </CardContent>
+                  </CardHeader>
+                </Card>
+              </TabsContent>
+              <TabsContent value="testo">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Testo</CardTitle>
+                    <CardDescription>Text Description</CardDescription>
+                  </CardHeader>
+                </Card>
+              </TabsContent>
+              <TabsContent value="sitoweb">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Website</CardTitle>
+                    <CardDescription>Website Description</CardDescription>
+                  </CardHeader>
+                </Card>
+              </TabsContent>
+              <TabsContent value="domande">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>domanda e risposta</CardTitle>
+                    <CardDescription>
+                      Descrizione di domande e risposte
+                    </CardDescription>
+                  </CardHeader>
+                </Card>
+              </TabsContent>
+            </Tabs>
+          </div>
+          <div className="mt-24">
+            <Card>
+              <CardHeader>
+                <CardTitle>
+                  <p className="text-bold text-lg">Included Sources</p>
+                </CardTitle>
+                <CardDescription>
+                  <p className={cn('text-sm', { hidden: !hasFiles })}>
+                    {`${pluralize(
+                      pickedFiles?.length || 0,
+                      'file',
+                      'files',
+                    )} added`}
+                  </p>
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button
+                  className="w-full"
+                  variant={hasFiles ? 'glow' : 'plain'}
+                  loading={loading}
+                  loadingMessage="creando..."
+                  onClick={handleClick}
+                >
+                  Create Chatbot
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
         </div>
-        <div className="mt-24">
-          <Card>
-            <CardHeader>
-              <CardTitle>
-                <p className="text-bold text-lg">Included Sources</p>
-              </CardTitle>
-              <CardDescription>
-                <p className={cn('text-sm', { hidden: !hasFiles })}>
-                  {`${pluralize(
-                    pickedFiles?.length || 0,
-                    'file',
-                    'files',
-                  )} added`}
-                </p>
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button
-                className="w-full"
-                variant={hasFiles ? 'glow' : 'plain'}
-                loading={loading}
-                loadingMessage="creando..."
-                onClick={handleClick}
-              >
-                Create Chatbot
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+      </NavbarLayout>
     </>
   );
 };
