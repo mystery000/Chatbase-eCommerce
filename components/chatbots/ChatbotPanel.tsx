@@ -131,7 +131,7 @@ const ChatbotPanel: FC = () => {
                 <h1 className="text-lg font-bold text-zinc-700">Thomas</h1>
               </div>
               <button className="text-sm text-zinc-700 hover:text-zinc-600">
-                <RefreshCw />
+                <RefreshCw onClick={() => setMessageState({ messages: [] })} />
               </button>
             </div>
             <div ref={messageListRef}>
