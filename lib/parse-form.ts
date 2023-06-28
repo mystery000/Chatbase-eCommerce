@@ -46,7 +46,13 @@ export const parseForm = async (
       filter: (part) => {
         return (
           part.name === 'documents' &&
-          (part.mimetype?.includes('application/pdf') || false)
+          ([
+            'text/plain',
+            'application/pdf',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          ].includes(part.mimetype || 'unsupported') ||
+            false)
         );
       },
     });

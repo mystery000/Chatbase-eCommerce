@@ -128,7 +128,7 @@ const ChatbotPanel: FC = () => {
                   height={36}
                   src="https://backend.chatbase.co/storage/v1/object/public/chatbots-profile-pictures/41291895-cdbe-487c-b1a3-fb65ce5ebde6/nOigJPd4i2gySOw_7iUzy.jfif?width=48&quality=100 1x, https://backend.chatbase.co/storage/v1/object/public/chatbots-profile-pictures/41291895-cdbe-487c-b1a3-fb65ce5ebde6/nOigJPd4i2gySOw_7iUzy.jfif?width=96&quality=100 2x"
                 />
-                <h1 className="text-lg font-bold text-zinc-700">Thomas</h1>
+                <h1 className="text-lg font-bold text-zinc-700">Mohamed</h1>
               </div>
               <button className="text-sm text-zinc-700 hover:text-zinc-600">
                 <RefreshCw onClick={() => setMessageState({ messages: [] })} />
