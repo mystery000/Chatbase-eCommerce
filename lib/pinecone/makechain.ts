@@ -1,4 +1,3 @@
-import { OpenAI } from 'langchain/llms/openai';
 import { PineconeStore } from 'langchain/vectorstores/pinecone';
 import { ConversationalRetrievalQAChain } from 'langchain/chains';
 import { BufferMemory } from 'langchain/memory';

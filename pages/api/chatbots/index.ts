@@ -63,7 +63,6 @@ export default async function handler(
             '.txt': (path) => new TextLoader(path),
             '.docx': (path) => new DocxLoader(path),
             '.doc': (path) => new UnstructuredLoader(path),
-            '.odt': (path) => new UnstructuredLoader(path),
           },
         );
         // const loader = new PDFLoader(filePath);

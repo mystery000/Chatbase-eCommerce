@@ -1,4 +1,4 @@
-import { FC, useCallback, useState, useEffect } from 'react';
+import { FC, useCallback, useState } from 'react';
 
 import {
   Card,
@@ -11,11 +11,9 @@ import {
 
 import cn from 'classnames';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import Button from '@/components/ui/buttoneEx';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-import { FileData } from '@/types/types';
 import { pluralize } from '@/lib/utils';
 import toast from 'react-hot-toast';
 import { createChatbot } from '@/lib/api';
