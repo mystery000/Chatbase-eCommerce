@@ -5,11 +5,14 @@ import { makeChain } from '@/lib/pinecone/makechain';
 import { pinecone } from '@/lib/pinecone/pinecone-client';
 import { PINECONE_INDEX_NAME } from '@/config/pinecone';
 import { BAD_METHOD, ERROR } from '@/config/HttpStatus';
+import requestIp from 'request-ip';
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse,
 ) {
+  const detectedIp = requestIp.getClientIp(req);
+  console.log(`${detectedIp} is chatting.`);
   const chatbot_id = req.query.id;
   const { question } = req.body;
 

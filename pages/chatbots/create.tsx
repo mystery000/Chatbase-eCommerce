@@ -39,7 +39,7 @@ const CreateChatbot: FC = () => {
       const newChatbot = await createChatbot(pickedFiles[0].name, pickedFiles);
       await mutateChatbots([...(chatbots || []), newChatbot]);
       setLoading(false);
-      toast.success('Chatbot created successfully.');
+      toast.success('Your chatbot is trained and ready.');
       setTimeout(() => {
         router.push('/chatbots');
       }, 500);

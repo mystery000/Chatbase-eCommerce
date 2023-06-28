@@ -13,7 +13,7 @@ import { TextLoader } from 'langchain/document_loaders/fs/text';
 import { DocxLoader } from 'langchain/document_loaders/fs/docx';
 import { UnstructuredLoader } from 'langchain/document_loaders/fs/unstructured';
 import { parseForm } from '@/lib/parse-form';
-
+import requestIp from 'request-ip';
 type Data = { status?: string; error?: string } | Chatbot[] | Chatbot;
 
 const allowMethods = ['GET', 'POST'];
@@ -22,6 +22,8 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<Data>,
 ) {
+  const detectedIp = requestIp.getClientIp(req);
+
   if (!req.method || !allowMethods.includes(req.method)) {
     res.setHeader('Allow', allowMethods);
     return res
@@ -32,6 +34,7 @@ export default async function handler(
   // Unauthorized
 
   if (req.method === 'GET') {
+    console.log(`Notification: ${detectedIp} is getting chatbots.`);
     try {
       const chatbots = await excuteQuery({
         query: 'SELECT * FROM chatbots',
@@ -44,6 +47,7 @@ export default async function handler(
         .json({ error: `Internal Server Error: due to ${error}` });
     }
   } else if (req.method === 'POST') {
+    console.log(`Notification: ${detectedIp} is creating new chatbot.`);
     try {
       const { fields, chatbot_id } = await parseForm(req);
       const name = fields.name[0];
