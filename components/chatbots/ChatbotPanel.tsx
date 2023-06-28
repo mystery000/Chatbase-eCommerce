@@ -126,7 +126,7 @@ const ChatbotPanel: FC = () => {
                   alt="profile picture"
                   width={36}
                   height={36}
-                  src="https://backend.chatbase.co/storage/v1/object/public/chatbots-profile-pictures/41291895-cdbe-487c-b1a3-fb65ce5ebde6/nOigJPd4i2gySOw_7iUzy.jfif?width=48&quality=100 1x, https://backend.chatbase.co/storage/v1/object/public/chatbots-profile-pictures/41291895-cdbe-487c-b1a3-fb65ce5ebde6/nOigJPd4i2gySOw_7iUzy.jfif?width=96&quality=100 2x"
+                  src="https://backend.chatbase.co/storage/v1/object/public/chatbots-profile-pictures/41291895-cdbe-487c-b1a3-fb65ce5ebde6/nikWhAS_rkVkUYl-6SrFF.jfif?width=48&quality=100 1x, https://backend.chatbase.co/storage/v1/object/public/chatbots-profile-pictures/41291895-cdbe-487c-b1a3-fb65ce5ebde6/nikWhAS_rkVkUYl-6SrFF.jfif?width=96&quality=100 2x"
                 />
                 <h1 className="text-lg font-bold text-zinc-700">Mohamed</h1>
               </div>

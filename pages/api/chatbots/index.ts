@@ -34,7 +34,6 @@ export default async function handler(
   // Unauthorized
 
   if (req.method === 'GET') {
-    console.log(`Notification: ${detectedIp} is getting chatbots.`);
     try {
       const chatbots = await excuteQuery({
         query: 'SELECT * FROM chatbots',
