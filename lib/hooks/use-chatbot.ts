@@ -10,8 +10,8 @@ export default function useChatbot() {
     data: chatbot,
     mutate,
     error,
+    isLoading,
   } = useSWR(chatbotId ? `/api/chatbots/${chatbotId}` : null, fetcher<Chatbot>);
 
-  const loading = !chatbot && !error;
-  return { loading, mutate, chatbot };
+  return { isLoading, mutate, chatbot };
 }

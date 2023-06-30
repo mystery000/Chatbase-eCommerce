@@ -12,3 +12,10 @@ export const createChatbot = async (name: string, documents: File[]) => {
   });
   return getResponseOrThrow<Chatbot>(res);
 };
+
+export const deleteChatbot = async (chatbotId: string) => {
+  const res = await fetch(`/api/chatbots/${chatbotId}`, {
+    method: 'DELETE',
+  });
+  return getResponseOrThrow<any>(res);
+};

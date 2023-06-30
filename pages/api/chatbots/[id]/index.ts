@@ -2,6 +2,8 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import excuteQuery from '@/lib/mysql';
 import { Chatbot } from '@/types/database';
 import { BAD_REQUEST, ERROR, NOT_FOUND, SUCCESS } from '@/config/HttpStatus';
+import { pinecone } from '@/lib/pinecone/pinecone-client';
+import { PINECONE_INDEX_NAME } from '@/config/pinecone';
 
 type Data =
   | {
@@ -37,7 +39,36 @@ export default async function handler(
         return res
           .status(NOT_FOUND)
           .json({ error: `There is no chatbot with id is ${chatbotId}` });
-      return res.status(SUCCESS).json(chatbot);
+      return res
+        .status(SUCCESS)
+        .json(Array.isArray(chatbot) ? chatbot[0] : chatbot);
+    } catch (error) {
+      return res
+        .status(ERROR)
+        .json({ error: `Internal Server Error: due to ${error}` });
+    }
+  }
+  if (req.method === 'DELETE') {
+    console.log('#######', chatbotId);
+    if (!chatbotId) {
+      return res
+        .status(BAD_REQUEST)
+        .json({ error: 'Invalid request: chatbot id is missing now.' });
+    }
+    try {
+      const index = pinecone.Index(PINECONE_INDEX_NAME);
+      await index.delete1({ deleteAll: true, namespace: chatbotId });
+
+      const chatbot = await excuteQuery({
+        query: 'DELETE FROM chatbots WHERE chatbot_id=(?)',
+        values: [chatbotId],
+      });
+
+      if (!chatbot)
+        return res
+          .status(NOT_FOUND)
+          .json({ error: `There is no chatbot with id is ${chatbotId}` });
+      return res.status(SUCCESS).json({ status: 'OK' });
     } catch (error) {
       return res
         .status(ERROR)

@@ -21,6 +21,7 @@ import ClientMessage from '../message/ClientMessage';
 import { Message } from '@/types/types';
 import { toast } from 'react-hot-toast';
 import { useRouter } from 'next/router';
+import { useConfigContext } from '@/lib/context/config';
 
 const ChatbotPanel: FC = () => {
   const router = useRouter();
@@ -32,7 +33,7 @@ const ChatbotPanel: FC = () => {
   const [messageState, setMessageState] = useState<{
     messages: Message[];
   }>({
-    messages: [{ message: 'Hi! What can I help you with?', type: 'AIMESSAGE' }],
+    messages: [{ message: 'Hi! What can I do for you?', type: 'AIMESSAGE' }],
   });
 
   const { messages } = messageState;
@@ -113,7 +114,8 @@ const ChatbotPanel: FC = () => {
       e.preventDefault();
     }
   };
-
+  const { placeholder, modelConfig } = useConfigContext();
+  console.log(placeholder, modelConfig);
   return (
     <Card>
       <CardContent>
@@ -126,7 +128,7 @@ const ChatbotPanel: FC = () => {
                   alt="profile picture"
                   width={36}
                   height={36}
-                  src="https://backend.chatbase.co/storage/v1/object/public/chatbots-profile-pictures/41291895-cdbe-487c-b1a3-fb65ce5ebde6/nikWhAS_rkVkUYl-6SrFF.jfif?width=48&quality=100 1x, https://backend.chatbase.co/storage/v1/object/public/chatbots-profile-pictures/41291895-cdbe-487c-b1a3-fb65ce5ebde6/nikWhAS_rkVkUYl-6SrFF.jfif?width=96&quality=100 2x"
+                  src="https://backend.chatbase.co/storage/v1/object/public/chatbots-profile-pictures/41291895-cdbe-487c-b1a3-fb65ce5ebde6/2WRGxVZYEi6cE-K1XcIQj.jfif?width=48&quality=100 1x, https://backend.chatbase.co/storage/v1/object/public/chatbots-profile-pictures/41291895-cdbe-487c-b1a3-fb65ce5ebde6/2WRGxVZYEi6cE-K1XcIQj.jfif?width=96&quality=100 2x"
                 />
                 <h1 className="text-lg font-bold text-zinc-700">Mohamed</h1>
               </div>
