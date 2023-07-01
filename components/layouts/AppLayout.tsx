@@ -37,7 +37,7 @@ export default function AppLayout({ children }: LayoutProps) {
                       </Link>
                     </NavigationMenuItem>
                     <NavigationMenuItem>
-                      <Link href="/docs" legacyBehavior passHref>
+                      <Link href="/pricing" legacyBehavior passHref>
                         <NavigationMenuLink
                           className={navigationMenuTriggerStyle()}
                         >
@@ -55,7 +55,7 @@ export default function AppLayout({ children }: LayoutProps) {
                       </Link>
                     </NavigationMenuItem>
                     <NavigationMenuItem>
-                      <Link href="/docs" legacyBehavior passHref>
+                      <Link href="/guide" legacyBehavior passHref>
                         <NavigationMenuLink
                           className={navigationMenuTriggerStyle()}
                         >

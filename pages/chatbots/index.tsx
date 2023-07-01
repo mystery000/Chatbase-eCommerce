@@ -10,6 +10,10 @@ export default function Chatbots() {
   const { chatbots, loading, mutate } = useChatbots();
   const baseURL = router.pathname;
 
+  if (loading || !chatbots) {
+    return <div className="text-center text-lg">Loading...</div>;
+  }
+
   return (
     <>
       <AppLayout>

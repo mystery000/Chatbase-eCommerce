@@ -36,6 +36,10 @@ const Chatbot = () => {
   const { chatbot, isLoading, mutate: mutateChatbot } = useChatbot();
   const [openDeleteDialog, setOpenDeleteDialog] = useState<boolean>(false);
   const [openShareDialog, setOpenShareDialog] = useState<boolean>(false);
+  const [requireLogin, setRequireLogin] = useState<boolean>(false);
+  const [sharing, setSharing] = useState<boolean>(false);
+  const [shared, setShared] = useState<boolean>(false);
+
   if (isLoading || !chatbot) {
     return (
       <>
@@ -58,7 +62,19 @@ const Chatbot = () => {
     router.push('/chatbots');
   };
 
-  const handleShareChatbot = async () => {};
+  const handleShareChatbot = async () => {
+    setSharing(true);
+    // Process to make public
+
+    setShared(true);
+    toast.success('Chatbot visibility updated successfully.');
+    // Process to remove public
+    setTimeout(() => {
+      setShared(false);
+    }, 10000);
+
+    setSharing(false);
+  };
 
   return (
     <>
@@ -104,41 +120,66 @@ const Chatbot = () => {
                     open={openShareDialog}
                     onOpenChange={setOpenShareDialog}
                   >
-                    <DialogTrigger>Share Chatbot</DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Share chatbot</DialogTitle>
-                        <DialogDescription>
-                          <div className="pb-4 text-lg font-medium leading-6 text-gray-600">
-                            By continuing your chatbot will become public
-                          </div>
-                        </DialogDescription>
-                      </DialogHeader>
-                      <div className="flex items-center space-x-2">
-                        <Switch id="require-login" />
-                        <Label htmlFor="require-login" className="ml-3 text-sm">
-                          <span className="font-medium text-gray-900">
-                            Require login for someone to use your chatbot{' '}
-                          </span>
-                          <span className="text-gray-500">
-                            (If you don't require login, the message credits
-                            they use will count for your account)
-                          </span>
-                        </Label>
-                      </div>
-                      <DialogFooter className="mt-4">
-                        <Button onClick={() => setOpenShareDialog(false)}>
-                          Cancel
-                        </Button>
-                        <Button
-                          variant={'destructive'}
-                          onClick={handleShareChatbot}
-                          className="inline-flex w-full justify-center rounded-md border border-transparent bg-violet-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm"
-                        >
-                          Make Public
-                        </Button>
-                      </DialogFooter>
-                    </DialogContent>
+                    <DialogTrigger>Share chatbot</DialogTrigger>
+                    {!shared && (
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Share chatbot</DialogTitle>
+                          <DialogDescription>
+                            <div className="pb-4 text-lg font-medium leading-6 text-gray-600">
+                              By continuing your chatbot will become public
+                            </div>
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="flex items-center space-x-2">
+                          <Switch
+                            id="require-login"
+                            onCheckedChange={(value) => setRequireLogin(value)}
+                          />
+                          <Label
+                            htmlFor="require-login"
+                            className="ml-3 text-sm"
+                          >
+                            <span className="font-medium text-gray-900">
+                              Require login for someone to use your chatbot{' '}
+                            </span>
+                            <span className="text-gray-500">
+                              (If you don't require login, the message credits
+                              they use will count for your account)
+                            </span>
+                          </Label>
+                        </div>
+                        <DialogFooter className="mt-4">
+                          <Button onClick={() => setOpenShareDialog(false)}>
+                            Cancel
+                          </Button>
+                          <Button
+                            variant={'destructive'}
+                            onClick={handleShareChatbot}
+                            className="inline-flex w-full justify-center rounded-md border border-transparent bg-violet-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm"
+                          >
+                            {sharing ? 'Processing...' : 'Make Public'}
+                          </Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    )}
+                    {shared && (
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Share your chatbot</DialogTitle>
+                          <DialogDescription>
+                            <div className="pb-4 text-lg font-medium leading-6 text-gray-600">
+                              Use this link to access the chatbot
+                            </div>
+                          </DialogDescription>
+                        </DialogHeader>
+                        <pre className="overflow-auto whitespace-normal rounded bg-slate-100 p-2 text-xs">
+                          <code>
+                            {`http://localhost:3000/chatbot-iframe/${chatbot?.chatbot_id}`}
+                          </code>
+                        </pre>
+                      </DialogContent>
+                    )}
                   </Dialog>
                 </TabsTrigger>
                 <TabsTrigger value="delete-chatbot" asChild>
