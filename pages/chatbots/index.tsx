@@ -1,5 +1,5 @@
-import NavbarLayout from '@/components/NavbarLayout';
 import ChatbotCard from '@/components/chatbots/ChatbotCard';
+import AppLayout from '@/components/layouts/AppLayout';
 import Button from '@/components/ui/buttoneEx';
 import useChatbots from '@/lib/hooks/use-chatbots';
 import Link from 'next/link';
@@ -12,7 +12,7 @@ export default function Chatbots() {
 
   return (
     <>
-      <NavbarLayout>
+      <AppLayout>
         <div className="mx-auto mt-4 flex w-4/5 flex-col gap-12">
           <div className="flex flex-row justify-between">
             <h1 className="grow text-2xl font-extrabold text-black md:text-3xl">
@@ -34,7 +34,7 @@ export default function Chatbots() {
             ))}
           </div>
         </div>
-      </NavbarLayout>
+      </AppLayout>
     </>
   );
 }

@@ -1,5 +1,4 @@
-import NavbarLayout from '@/components/NavbarLayout';
-
+import AppLayout from '@/components/layouts/AppLayout';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 
@@ -8,9 +7,9 @@ export default function Home() {
 
   return (
     <>
-      <NavbarLayout>
+      <AppLayout>
         <div className="text-bold text-center text-3xl">HOME</div>
-      </NavbarLayout>
+      </AppLayout>
     </>
   );
 }

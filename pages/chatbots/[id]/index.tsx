@@ -1,4 +1,3 @@
-import NavbarLayout from '@/components/NavbarLayout';
 import ChatbotPanel from '@/components/chatbots/ChatbotPanel';
 import { Button } from '@/components/ui/button';
 import {
@@ -27,14 +26,16 @@ import useChatbot from '@/lib/hooks/use-chatbot';
 import { Router, useRouter } from 'next/router';
 import { useState, useCallback, ChangeEvent } from 'react';
 import { toast } from 'react-hot-toast';
-import { useConfigContext } from '@/lib/context/config';
 import { Textarea } from '@/components/ui/textarea';
+import { DEFAULT_PROMPT_TEMPLATE } from '@/config/chabot';
+import { Switch } from '@/components/ui/switch';
+import AppLayout from '@/components/layouts/AppLayout';
 
 const Chatbot = () => {
   const router = useRouter();
   const { chatbot, isLoading, mutate: mutateChatbot } = useChatbot();
-  const [open, setOpen] = useState<boolean>(false);
-
+  const [openDeleteDialog, setOpenDeleteDialog] = useState<boolean>(false);
+  const [openShareDialog, setOpenShareDialog] = useState<boolean>(false);
   if (isLoading || !chatbot) {
     return (
       <>
@@ -52,16 +53,16 @@ const Chatbot = () => {
       console.log('error:', error);
       toast.error('Failed to delete a chatbot');
     } finally {
-      setOpen(false);
+      setOpenDeleteDialog(false);
     }
     router.push('/chatbots');
   };
 
-  const { modelConfig } = useConfigContext();
+  const handleShareChatbot = async () => {};
 
   return (
     <>
-      <NavbarLayout>
+      <AppLayout>
         <div className="mx-auto w-3/4">
           <div className="m-4 text-center text-3xl font-bold">
             {chatbot?.name}
@@ -71,14 +72,80 @@ const Chatbot = () => {
               <TabsList className="w-full gap-4">
                 <TabsTrigger value="chatbot">Chatbot</TabsTrigger>
                 <TabsTrigger value="settings">Settings</TabsTrigger>
-                <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
                 <TabsTrigger value="manage-sources">Manage Sources</TabsTrigger>
-                <TabsTrigger value="embeded-on-website">
-                  Embeded on website
+                <TabsTrigger value="embeded-on-website" asChild>
+                  <Dialog>
+                    <DialogTrigger>Embeded on website</DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Embeded on website</DialogTitle>
+                        <DialogDescription>
+                          To add the chatbot any where on your website, add this
+                          iframe to your html code
+                        </DialogDescription>
+                      </DialogHeader>
+                      <pre className="w-full overflow-auto whitespace-normal rounded bg-slate-100 p-2 text-xs">
+                        <code>
+                          {`
+                            <iframe
+                              src="http://localhost:3000/chatbot-iframe/${chatbot?.chatbot_id}"
+                              width="100%"
+                              style="height: 100%; min-height: 700px"
+                              frameborder="0"
+                            ></iframe>
+                        `}
+                        </code>
+                      </pre>
+                    </DialogContent>
+                  </Dialog>
                 </TabsTrigger>
-                <TabsTrigger value="share-chatbot">Share Chatbot</TabsTrigger>
+                <TabsTrigger value="share-chatbot" asChild>
+                  <Dialog
+                    open={openShareDialog}
+                    onOpenChange={setOpenShareDialog}
+                  >
+                    <DialogTrigger>Share Chatbot</DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Share chatbot</DialogTitle>
+                        <DialogDescription>
+                          <div className="pb-4 text-lg font-medium leading-6 text-gray-600">
+                            By continuing your chatbot will become public
+                          </div>
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="flex items-center space-x-2">
+                        <Switch id="require-login" />
+                        <Label htmlFor="require-login" className="ml-3 text-sm">
+                          <span className="font-medium text-gray-900">
+                            Require login for someone to use your chatbot{' '}
+                          </span>
+                          <span className="text-gray-500">
+                            (If you don't require login, the message credits
+                            they use will count for your account)
+                          </span>
+                        </Label>
+                      </div>
+                      <DialogFooter className="mt-4">
+                        <Button onClick={() => setOpenShareDialog(false)}>
+                          Cancel
+                        </Button>
+                        <Button
+                          variant={'destructive'}
+                          onClick={handleShareChatbot}
+                          className="inline-flex w-full justify-center rounded-md border border-transparent bg-violet-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm"
+                        >
+                          Make Public
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                </TabsTrigger>
                 <TabsTrigger value="delete-chatbot" asChild>
-                  <Dialog open={open} onOpenChange={setOpen}>
+                  <Dialog
+                    open={openDeleteDialog}
+                    onOpenChange={setOpenDeleteDialog}
+                  >
                     <DialogTrigger>Delete Chatbot</DialogTrigger>
                     <DialogContent>
                       <DialogHeader>
@@ -87,22 +154,21 @@ const Chatbot = () => {
                           Are you sure you want to delete your chatbot? This
                           action cannot be undone.
                         </DialogDescription>
-                        <DialogFooter>
-                          <Button onClick={() => setOpen(false)}>Cancel</Button>
-                          <Button
-                            variant={'destructive'}
-                            onClick={handleDelete}
-                          >
-                            Delete
-                          </Button>
-                        </DialogFooter>
                       </DialogHeader>
+                      <DialogFooter>
+                        <Button onClick={() => setOpenDeleteDialog(false)}>
+                          Cancel
+                        </Button>
+                        <Button variant={'destructive'} onClick={handleDelete}>
+                          Delete
+                        </Button>
+                      </DialogFooter>
                     </DialogContent>
                   </Dialog>
                 </TabsTrigger>
               </TabsList>
               <TabsContent value="chatbot">
-                <ChatbotPanel />
+                <ChatbotPanel chatbotId={chatbot.chatbot_id} />
               </TabsContent>
               <TabsContent value="settings">
                 <Card>
@@ -131,22 +197,14 @@ const Chatbot = () => {
                       <Label htmlFor="basePrompt">Base Prompt</Label>
                       <Textarea
                         id="basePrompt"
-                        className="whitespace-pre"
-                        value={modelConfig?.promptTemplate}
+                        className="h-fit whitespace-pre"
+                        value={DEFAULT_PROMPT_TEMPLATE.template}
                         onChange={(
                           event: ChangeEvent<HTMLTextAreaElement>,
                         ) => {}}
                       ></Textarea>
                     </div>
                   </CardContent>
-                </Card>
-              </TabsContent>
-              <TabsContent value="dashboard">
-                <Card>
-                  <CardHeader className="text-center">
-                    <CardTitle>Dashboard</CardTitle>
-                    <CardDescription>Dashboard Description</CardDescription>
-                  </CardHeader>
                 </Card>
               </TabsContent>
               <TabsContent value="manage-sources">
@@ -157,26 +215,10 @@ const Chatbot = () => {
                   </CardHeader>
                 </Card>
               </TabsContent>
-              <TabsContent value="embeded-on-website">
-                <Card>
-                  <CardHeader className="text-center">
-                    <CardTitle>Embeded on website</CardTitle>
-                    <CardDescription>Embed on website content</CardDescription>
-                  </CardHeader>
-                </Card>
-              </TabsContent>
-              <TabsContent value="share-chatbot">
-                <Card>
-                  <CardHeader className="text-center">
-                    <CardTitle>Share Chatbot</CardTitle>
-                    <CardDescription>Share Chatbot Content</CardDescription>
-                  </CardHeader>
-                </Card>
-              </TabsContent>
             </Tabs>
           </div>
         </div>
-      </NavbarLayout>
+      </AppLayout>
     </>
   );
 };

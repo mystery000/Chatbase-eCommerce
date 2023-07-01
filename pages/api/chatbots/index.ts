@@ -14,6 +14,12 @@ import { DocxLoader } from 'langchain/document_loaders/fs/docx';
 import { UnstructuredLoader } from 'langchain/document_loaders/fs/unstructured';
 import { parseForm } from '@/lib/parse-form';
 import requestIp from 'request-ip';
+import {
+  DEFAULT_MODEL_CONFIG,
+  DEFAULT_CONFIG_VALUES,
+  DEFAULT_CONTACT_INFO,
+} from '@/config/chabot';
+
 type Data = { status?: string; error?: string } | Chatbot[] | Chatbot;
 
 const allowMethods = ['GET', 'POST'];
@@ -95,17 +101,54 @@ export default async function handler(
           .json({ error: `Failed to train your data due to ${error}` });
       }
       try {
+        const { promptTemplate, model, temperature } = DEFAULT_MODEL_CONFIG;
+        const {
+          visibility,
+          ip_limit,
+          ip_limit_message,
+          ip_limit_timeframe,
+          initial_messages,
+        } = DEFAULT_CONFIG_VALUES;
+
+        const chatbot: Chatbot = {
+          chatbot_id,
+          name,
+          created_at,
+          promptTemplate,
+          model,
+          temperature,
+          visibility,
+          ip_limit,
+          ip_limit_message,
+          ip_limit_timeframe,
+          initial_messages,
+          contact_info: DEFAULT_CONTACT_INFO,
+        };
+
         await excuteQuery({
           query:
-            'insert into chatbots (chatbot_id, name, created_at) values (?,?,?)',
-          values: [chatbot_id, name, created_at],
+            'insert into chatbots (chatbot_id, name, created_at, prompt, model, temp, visibility, ip_limit, ip_limit_message, ip_limit_timeframe, initial_messages, contact_info) values (?,?,?,?,?,?,?,?,?,?,?,?)',
+          values: [
+            chatbot_id,
+            name,
+            created_at,
+            promptTemplate,
+            model,
+            temperature,
+            visibility,
+            ip_limit,
+            ip_limit_message,
+            ip_limit_timeframe,
+            JSON.stringify(initial_messages),
+            JSON.stringify(chatbot.contact_info),
+          ],
         });
+        return res.status(SUCCESS).json(chatbot);
       } catch (error) {
         return res
           .status(ERROR)
           .json({ error: `Internal Server Error: due to ${error}` });
       }
-      return res.status(SUCCESS).json({ chatbot_id, name, created_at });
     } catch (error) {
       return res
         .status(ERROR)

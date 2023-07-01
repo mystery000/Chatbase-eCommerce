@@ -1,4 +1,4 @@
-import { FC, useCallback, useState } from 'react';
+import { FC, useCallback, useState, ChangeEvent } from 'react';
 
 import {
   Card,
@@ -19,13 +19,19 @@ import toast from 'react-hot-toast';
 import { createChatbot } from '@/lib/api';
 import useChatbots from '@/lib/hooks/use-chatbots';
 import { useRouter } from 'next/router';
-import NavbarLayout from '@/components/NavbarLayout';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import AppLayout from '@/components/layouts/AppLayout';
 
 const CreateChatbot: FC = () => {
   const MAX_FILES = 5;
   const router = useRouter();
   const [loading, setLoading] = useState<boolean>(false);
+
+  // Data Sources files, text, website, sitemap, QA
   const [pickedFiles, setPickFiles] = useState<File[]>([]);
+  const [text, setText] = useState<string>('');
+
   const { chatbots, mutate: mutateChatbots } = useChatbots();
 
   const handleClick = useCallback(async () => {
@@ -63,7 +69,7 @@ const CreateChatbot: FC = () => {
 
   return (
     <>
-      <NavbarLayout>
+      <AppLayout>
         <div className="mx-auto w-1/2">
           <div className="m-4 text-center text-3xl font-bold">Data Sources</div>
           <div>
@@ -98,10 +104,28 @@ const CreateChatbot: FC = () => {
               </TabsContent>
               <TabsContent value="testo">
                 <Card>
-                  <CardHeader>
-                    <CardTitle>Testo</CardTitle>
-                    <CardDescription>Text Description</CardDescription>
-                  </CardHeader>
+                  <CardContent>
+                    <div className="pt-8">
+                      <Label htmlFor="chatbotName">Chatbot Name</Label>
+                      <Input
+                        id="chatbotName"
+                        value={text}
+                        onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                          setText(event.target.value);
+                        }}
+                      ></Input>
+                    </div>
+                    <div className="pt-8">
+                      <Label htmlFor="text">Text</Label>
+                      <Textarea
+                        id="text"
+                        className="h-56 whitespace-pre"
+                        onChange={(
+                          event: ChangeEvent<HTMLTextAreaElement>,
+                        ) => {}}
+                      ></Textarea>
+                    </div>
+                  </CardContent>
                 </Card>
               </TabsContent>
               <TabsContent value="sitoweb">
@@ -154,7 +178,7 @@ const CreateChatbot: FC = () => {
             </Card>
           </div>
         </div>
-      </NavbarLayout>
+      </AppLayout>
     </>
   );
 };

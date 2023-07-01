@@ -21,11 +21,12 @@ import ClientMessage from '../message/ClientMessage';
 import { Message } from '@/types/types';
 import { toast } from 'react-hot-toast';
 import { useRouter } from 'next/router';
-import { useConfigContext } from '@/lib/context/config';
 
-const ChatbotPanel: FC = () => {
-  const router = useRouter();
-  const chatbotId = router.query.id;
+type ChatbotPanelProps = {
+  chatbotId: string;
+};
+
+const ChatbotPanel = ({ chatbotId }: ChatbotPanelProps) => {
   const [query, setQuery] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -114,8 +115,7 @@ const ChatbotPanel: FC = () => {
       e.preventDefault();
     }
   };
-  const { placeholder, modelConfig } = useConfigContext();
-  console.log(placeholder, modelConfig);
+
   return (
     <Card>
       <CardContent>
