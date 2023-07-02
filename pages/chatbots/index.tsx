@@ -1,9 +1,11 @@
-import ChatbotCard from '@/components/chatbots/ChatbotCard';
-import AppLayout from '@/components/layouts/AppLayout';
+import Link from 'next/link';
+import dynamic from 'next/dynamic';
+import { useRouter } from 'next/router';
+
+const ChatbotCard = dynamic(() => import('@/components/chatbots/ChatbotCard'));
+const AppLayout = dynamic(() => import('@/components/layouts/AppLayout'));
 import Button from '@/components/ui/buttoneEx';
 import useChatbots from '@/lib/hooks/use-chatbots';
-import Link from 'next/link';
-import { useRouter } from 'next/router';
 
 export default function Chatbots() {
   const router = useRouter();

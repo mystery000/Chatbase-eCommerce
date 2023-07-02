@@ -1,5 +1,10 @@
 import { FC } from 'react';
-import ChatbotPanel from '@/components/chatbots/ChatbotPanel';
+import dynamic from 'next/dynamic';
+
+const ChatbotPanel = dynamic(
+  () => import('@/components/chatbots/ChatbotPanel'),
+);
+
 import useChatbot from '@/lib/hooks/use-chatbot';
 
 const SharedChatbot: FC = () => {
@@ -8,6 +13,7 @@ const SharedChatbot: FC = () => {
   if (!chatbot) {
     return <div className="text-center">Not Found</div>;
   }
+
   return (
     <>
       <ChatbotPanel chatbotId={chatbot.chatbot_id} />

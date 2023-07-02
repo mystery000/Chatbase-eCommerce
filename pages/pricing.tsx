@@ -1,10 +1,7 @@
-import AppLayout from '@/components/layouts/AppLayout';
-import Link from 'next/link';
-import { useRouter } from 'next/router';
+import dynamic from 'next/dynamic';
+const AppLayout = dynamic(() => import('@/components/layouts/AppLayout'));
 
 export default function Pricing() {
-  const router = useRouter();
-
   return (
     <>
       <AppLayout>

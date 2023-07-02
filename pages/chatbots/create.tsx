@@ -1,4 +1,7 @@
+import dynamic from 'next/dynamic';
+import { useRouter } from 'next/router';
 import { FC, useCallback, useState, ChangeEvent } from 'react';
+const AppLayout = dynamic(() => import('@/components/layouts/AppLayout'));
 
 import {
   Card,
@@ -11,17 +14,15 @@ import {
 
 import cn from 'classnames';
 import { Input } from '@/components/ui/input';
-import Button from '@/components/ui/buttoneEx';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 import { pluralize } from '@/lib/utils';
 import toast from 'react-hot-toast';
 import { createChatbot } from '@/lib/api';
 import useChatbots from '@/lib/hooks/use-chatbots';
-import { useRouter } from 'next/router';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import AppLayout from '@/components/layouts/AppLayout';
+const Button = dynamic(() => import('@/components/ui/buttoneEx'));
 
 const CreateChatbot: FC = () => {
   const MAX_FILES = 5;
@@ -78,7 +79,6 @@ const CreateChatbot: FC = () => {
                 <TabsTrigger value="files">Files</TabsTrigger>
                 <TabsTrigger value="testo">Text</TabsTrigger>
                 <TabsTrigger value="sitoweb">Website</TabsTrigger>
-                <TabsTrigger value="domande">Q&A</TabsTrigger>
               </TabsList>
               <TabsContent value="files">
                 <Card>
@@ -116,7 +116,7 @@ const CreateChatbot: FC = () => {
                       ></Input>
                     </div>
                     <div className="pt-8">
-                      <Label htmlFor="text">Text</Label>
+                      <Label htmlFor="text">Data</Label>
                       <Textarea
                         id="text"
                         className="h-56 whitespace-pre"
@@ -130,20 +130,67 @@ const CreateChatbot: FC = () => {
               </TabsContent>
               <TabsContent value="sitoweb">
                 <Card>
-                  <CardHeader>
-                    <CardTitle>Website</CardTitle>
-                    <CardDescription>Website Description</CardDescription>
-                  </CardHeader>
-                </Card>
-              </TabsContent>
-              <TabsContent value="domande">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>domanda e risposta</CardTitle>
-                    <CardDescription>
-                      Descrizione di domande e risposte
-                    </CardDescription>
-                  </CardHeader>
+                  <CardContent>
+                    <div className="pt-8">
+                      <Label
+                        htmlFor="crawl"
+                        className="my-2 block text-sm font-medium leading-6 text-gray-900"
+                      >
+                        Crawl
+                      </Label>
+                      <div className="flex space-x-2">
+                        <Input
+                          id="crawl"
+                          value={text}
+                          onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                            setText(event.target.value);
+                          }}
+                          placeholder="https://www.example.com"
+                        ></Input>
+                        <Button variant={'plain'}>Fetch links</Button>
+                      </div>
+                      <span className="py-4 text-sm text-zinc-600">
+                        This will crawl all the links starting with the URL (not
+                        including files on the website).
+                      </span>
+                    </div>
+                    <div className="my-4 flex items-center">
+                      <hr className="w-full border-t border-gray-300" />
+                      <span className="whitespace-nowrap px-2 text-gray-600">
+                        OR
+                      </span>
+                      <hr className="w-full border-t border-gray-300" />
+                    </div>
+                    <div className="pt-2">
+                      <Label
+                        htmlFor="sitemap"
+                        className="my-2 block text-sm font-medium leading-6 text-gray-900"
+                      >
+                        Submit Sitemap
+                      </Label>
+                      <div className="flex space-x-2">
+                        <Input
+                          id="sitemap"
+                          value={text}
+                          onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                            setText(event.target.value);
+                          }}
+                          placeholder="https://www.example.com/sitemap.xml"
+                        ></Input>
+                        <Button variant={'plain'} loadingMessage="">
+                          Load sitemap
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="pt-8">
+                      <Label
+                        htmlFor="exluded_urls"
+                        className="my-2 block text-sm font-medium leading-6 text-gray-900"
+                      >
+                        Included Links
+                      </Label>
+                    </div>
+                  </CardContent>
                 </Card>
               </TabsContent>
             </Tabs>

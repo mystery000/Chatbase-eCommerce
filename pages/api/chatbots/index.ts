@@ -127,7 +127,7 @@ export default async function handler(
 
         await excuteQuery({
           query:
-            'insert into chatbots (chatbot_id, name, created_at, prompt, model, temp, visibility, ip_limit, ip_limit_message, ip_limit_timeframe, initial_messages, contact_info) values (?,?,?,?,?,?,?,?,?,?,?,?)',
+            'insert into chatbots (chatbot_id, name, created_at, promptTemplate, model, temperature, visibility, ip_limit, ip_limit_message, ip_limit_timeframe, initial_messages, contact_info) values (?,?,?,?,?,?,?,?,?,?,?,?)',
           values: [
             chatbot_id,
             name,

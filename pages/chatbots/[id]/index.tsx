@@ -1,5 +1,15 @@
-import ChatbotPanel from '@/components/chatbots/ChatbotPanel';
-import { Button } from '@/components/ui/button';
+import { useState, ChangeEvent } from 'react';
+import dynamic from 'next/dynamic';
+import { useRouter } from 'next/router';
+import { Slider } from '@/components/ui/slider';
+
+const ChatbotPanel = dynamic(
+  () => import('@/components/chatbots/ChatbotPanel'),
+);
+const AppLayout = dynamic(() => import('@/components/layouts/AppLayout'));
+const RetrainChatbot = dynamic(
+  () => import('@/components/chatbots/RetrainChatbot'),
+);
 import {
   Card,
   CardContent,
@@ -18,32 +28,50 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { toast } from 'react-hot-toast';
 import { deleteChatbot } from '@/lib/api';
 import useChatbot from '@/lib/hooks/use-chatbot';
-import { Router, useRouter } from 'next/router';
-import { useState, useCallback, ChangeEvent } from 'react';
-import { toast } from 'react-hot-toast';
-import { Textarea } from '@/components/ui/textarea';
-import { DEFAULT_PROMPT_TEMPLATE } from '@/config/chabot';
-import { Switch } from '@/components/ui/switch';
-import AppLayout from '@/components/layouts/AppLayout';
+import useSources from '@/lib/hooks/use-sources';
 
 const Chatbot = () => {
   const router = useRouter();
-  const { chatbot, isLoading, mutate: mutateChatbot } = useChatbot();
+  const {
+    chatbot,
+    isLoading: isLoadingChatbot,
+    mutate: mutateChatbot,
+  } = useChatbot();
+
+  const {
+    sources,
+    isLoading: isLoadingSources,
+    mutate: mutateSources,
+  } = useSources();
+
   const [openDeleteDialog, setOpenDeleteDialog] = useState<boolean>(false);
   const [openShareDialog, setOpenShareDialog] = useState<boolean>(false);
   const [requireLogin, setRequireLogin] = useState<boolean>(false);
   const [sharing, setSharing] = useState<boolean>(false);
   const [shared, setShared] = useState<boolean>(false);
 
-  if (isLoading || !chatbot) {
+  if (isLoadingChatbot || isLoadingSources) {
     return (
       <>
         <p className="text-red/50 text-center">Loading...</p>
+      </>
+    );
+  }
+
+  if (!chatbot || !sources) {
+    return (
+      <>
+        <div className="text-gree/50 text-center">No Content</div>
       </>
     );
   }
@@ -238,22 +266,42 @@ const Chatbot = () => {
                       <Label htmlFor="basePrompt">Base Prompt</Label>
                       <Textarea
                         id="basePrompt"
-                        className="h-fit whitespace-pre"
-                        value={DEFAULT_PROMPT_TEMPLATE.template}
+                        className="h-48"
+                        value={`${chatbot.promptTemplate}`}
                         onChange={(
                           event: ChangeEvent<HTMLTextAreaElement>,
                         ) => {}}
                       ></Textarea>
+                    </div>
+                    <div className="pt-8">
+                      <Label htmlFor="model">Model</Label>
+                      <Input
+                        id="model"
+                        value={chatbot?.model}
+                        onChange={(event: ChangeEvent<HTMLInputElement>) => {}}
+                      ></Input>
+                    </div>
+                    <div className="pt-8">
+                      <label className="block text-sm font-medium text-gray-700">
+                        Temperature
+                      </label>
+                      <p className="text-sm">{chatbot.temperature}</p>
+                      <Slider
+                        defaultValue={[chatbot.temperature]}
+                        max={1}
+                        step={0.1}
+                      />
+                      <div className="flex justify-between">
+                        <p className="text-xs text-zinc-700">Reserved</p>
+                        <p className="text-xs text-zinc-700">Creative</p>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
               </TabsContent>
               <TabsContent value="manage-sources">
                 <Card>
-                  <CardHeader className="text-center">
-                    <CardTitle>Manage Sources</CardTitle>
-                    <CardDescription>Mange Sources Content</CardDescription>
-                  </CardHeader>
+                  <RetrainChatbot />
                 </Card>
               </TabsContent>
             </Tabs>

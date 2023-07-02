@@ -21,3 +21,10 @@ export type Chatbot = {
   profile_icon?: string;
   contact_info: Contact;
 };
+
+export type Source = {
+  chatbot_id: string;
+  type: 'file' | 'text' | 'crawl' | 'sitemap';
+  content: string;
+  size: number;
+};
