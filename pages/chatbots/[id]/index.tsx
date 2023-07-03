@@ -29,6 +29,14 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
@@ -287,14 +295,112 @@ const Chatbot = () => {
                       </label>
                       <p className="text-sm">{chatbot.temperature}</p>
                       <Slider
-                        defaultValue={[chatbot.temperature]}
                         max={1}
                         step={0.1}
+                        className="py-2"
+                        value={[chatbot.temperature]}
                       />
                       <div className="flex justify-between">
                         <p className="text-xs text-zinc-700">Reserved</p>
                         <p className="text-xs text-zinc-700">Creative</p>
                       </div>
+                    </div>
+                    <div className="pt-8">
+                      <Label htmlFor="visibilty">Visibilty</Label>
+                      <Select defaultValue={chatbot.visibility}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select the visibilty" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="private">Private</SelectItem>
+                          <SelectItem value="protected">
+                            Private but can be embeded on website
+                          </SelectItem>
+                          <SelectItem value="public">Public</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <p className="mt-2 text-sm text-zinc-500">
+                        'Private': No one can access your chatbot except you
+                        (your account)
+                      </p>
+                      <p className="mt-2 text-sm text-zinc-500">
+                        'Private but can be embedded on website': Other people
+                        can't access your chatbot if you send them the link, but
+                        you can still embed it on your website and your website
+                        visitors will be able to use it. (make sure to set your
+                        domains)
+                      </p>
+                      <p className="mt-2 text-sm text-zinc-500">
+                        'Public': Anyone with the link can access it on
+                        chatbase.co and can be embedded on your website.
+                      </p>
+                      <p className="mt-2 text-sm text-zinc-500">
+                        Set to public if you want to be able to send a link of
+                        your chatbot to someone to try it.
+                      </p>
+                    </div>
+                    <div className="pt-8">
+                      <div className="flex justify-between">
+                        <Label htmlFor="rate_limit">Rate Limiting</Label>
+                        <Button variant={'secondary'}>Reset</Button>
+                      </div>
+                      <p className="mt-2 text-sm text-zinc-500">
+                        Limit the number of messages sent from one device on the
+                        iframe and chat bubble (this limit will not be applied
+                        to you on chatbase.co, only on your website for your
+                        users to prevent abuse).
+                      </p>
+                      <div className="mt-1 text-sm text-zinc-700">
+                        Limit to only
+                        <Input
+                          value={chatbot?.ip_limit}
+                          onChange={(
+                            event: ChangeEvent<HTMLInputElement>,
+                          ) => {}}
+                        />
+                        messages every
+                        <Input
+                          value={chatbot?.ip_limit_timeframe}
+                          onChange={(
+                            event: ChangeEvent<HTMLInputElement>,
+                          ) => {}}
+                        />
+                        seconds.
+                      </div>
+                      <div className="my-4 text-sm text-zinc-700">
+                        Show this message to show when limit is hit
+                        <Input
+                          value={chatbot?.ip_limit_message}
+                          onChange={(
+                            event: ChangeEvent<HTMLInputElement>,
+                          ) => {}}
+                        />
+                      </div>
+                    </div>
+                    <div className="pt-8">
+                      <Label>Collect Customer Info</Label>
+                      <div className="flex justify-between">
+                        <label className="block pb-2 text-sm font-semibold">
+                          Title
+                        </label>
+                        <Button variant={'secondary'}>Reset</Button>
+                      </div>
+                      <Input
+                        value="Let us know how to contact you"
+                        className="mb-4"
+                      />
+                      <label className="block pb-2 text-sm font-medium text-gray-700">
+                        Name
+                      </label>
+                      <Switch />
+                      <label className="block pb-2 text-sm font-medium text-gray-700">
+                        Email
+                      </label>
+                      <Switch />
+                      <label className="block pb-2 text-sm font-medium text-gray-700">
+                        Phone Number
+                      </label>
+                      <Switch />
                     </div>
                   </CardContent>
                 </Card>

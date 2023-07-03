@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-empty-function */
-import { ModelConfig } from '@/types/types';
+import { ModelConfig, VisibilityType } from '@/types/types';
 
 export const DEFAULT_PROMPT_TEMPLATE = {
   name: 'Default',
@@ -18,13 +18,25 @@ export const DEFAULT_MODEL_CONFIG: ModelConfig = {
   sectionsMatchThreshold: 0.5,
 };
 
-const initial_messages = ['Hi! What can I help you with?'];
+export const initial_messages = ['Hi! What can I help you with?'];
 
-export const DEFAULT_CONFIG_VALUES = {
-  visibility: 'public',
+export const DEFAULT_RATE_LIMIT = {
   ip_limit: 20,
   ip_limit_message: 'Too many messages in a row',
   ip_limit_timeframe: 240,
+};
+
+export const DEFAULT_CONFIG_VALUES: {
+  visibility: VisibilityType;
+  ip_limit: number;
+  ip_limit_message: string;
+  ip_limit_timeframe: number;
+  initial_messages: any;
+} = {
+  visibility: 'public',
+  ip_limit: DEFAULT_RATE_LIMIT.ip_limit,
+  ip_limit_message: DEFAULT_RATE_LIMIT.ip_limit_message,
+  ip_limit_timeframe: DEFAULT_RATE_LIMIT.ip_limit_timeframe,
   initial_messages: initial_messages,
 };
 

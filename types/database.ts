@@ -1,3 +1,5 @@
+import { SourceType, VisibilityType } from './types';
+
 export type Contact = {
   title: string;
   name: { active: boolean; label: string };
@@ -12,7 +14,7 @@ export type Chatbot = {
   promptTemplate: string;
   model: string;
   temperature: number;
-  visibility: string;
+  visibility: VisibilityType;
   ip_limit: number;
   ip_limit_message: string;
   ip_limit_timeframe: number;
@@ -24,7 +26,7 @@ export type Chatbot = {
 
 export type Source = {
   chatbot_id: string;
-  type: 'file' | 'text' | 'crawl' | 'sitemap';
+  type: SourceType;
   content: string;
   size: number;
 };

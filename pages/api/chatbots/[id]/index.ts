@@ -49,7 +49,6 @@ export default async function handler(
     }
   }
   if (req.method === 'DELETE') {
-    console.log('#######', chatbotId);
     if (!chatbotId) {
       return res
         .status(BAD_REQUEST)

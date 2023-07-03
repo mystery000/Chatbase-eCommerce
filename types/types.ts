@@ -42,3 +42,6 @@ export type ModelConfig = {
   sectionsMatchCount: number;
   sectionsMatchThreshold: number;
 };
+
+export type VisibilityType = 'public' | 'protected' | 'private';
+export type SourceType = 'file' | 'text' | 'crawl' | 'sitemap';
