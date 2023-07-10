@@ -1,6 +1,8 @@
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
 import { FC, useCallback, useState, ChangeEvent } from 'react';
+import validator from 'validator';
+
 const AppLayout = dynamic(() => import('@/components/layouts/AppLayout'));
 
 import {
@@ -22,6 +24,10 @@ import { createChatbot } from '@/lib/api';
 import useChatbots from '@/lib/hooks/use-chatbots';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { crwalWebsiteContentSize } from '@/lib/integrations/website';
+import { Trash2 } from 'lucide-react';
+import { v4 as uuidv4 } from 'uuid';
+
 const Button = dynamic(() => import('@/components/ui/buttoneEx'));
 
 const CreateChatbot: FC = () => {
@@ -31,7 +37,14 @@ const CreateChatbot: FC = () => {
 
   // Data Sources files, text, website, sitemap, QA
   const [pickedFiles, setPickFiles] = useState<File[]>([]);
+  const [name, setName] = useState<string>('');
   const [text, setText] = useState<string>('');
+  const [crawlURL, setCrawlURL] = useState<string>('');
+  const [crawlURLs, setCrawlURLs] = useState<
+    { size: number; url: string; id: string }[]
+  >([]);
+  const [crawling, setCrawling] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string>('');
 
   const { chatbots, mutate: mutateChatbots } = useChatbots();
 
@@ -56,7 +69,10 @@ const CreateChatbot: FC = () => {
     }
   }, [pickedFiles]);
 
-  const hasFiles = pickedFiles?.length || 0;
+  const hasFiles = pickedFiles?.length || false;
+  const hasText = text.length;
+  const hasWebsiteOrSitemapURL = crawlURLs.length;
+  const hasSources = hasFiles || hasText || hasWebsiteOrSitemapURL;
 
   const handleFileEvent = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
@@ -67,6 +83,31 @@ const CreateChatbot: FC = () => {
     }
     setPickFiles(files);
   };
+
+  const onRemoveSelected = (id: string) => {
+    console.log(id);
+    setCrawlURLs((state) => state.filter((data) => data.id !== id));
+  };
+
+  const crawlWebsiteHandler = async () => {
+    if (!crawlURL || errorMessage) return;
+    try {
+      setCrawling(true);
+      const contentSize = await crwalWebsiteContentSize(crawlURL);
+      setCrawlURLs((state) => [
+        ...state,
+        { size: contentSize || 0, url: crawlURL, id: uuidv4() },
+      ]);
+      setCrawling(false);
+      setCrawlURL('');
+    } catch (error) {
+      console.log(error);
+      toast.error(`Failed to crawl due to ${error}`);
+      setCrawling(false);
+    }
+  };
+
+  const crawlSiteMapHandler = () => {};
 
   return (
     <>
@@ -109,9 +150,9 @@ const CreateChatbot: FC = () => {
                       <Label htmlFor="chatbotName">Chatbot Name</Label>
                       <Input
                         id="chatbotName"
-                        value={text}
+                        value={name}
                         onChange={(event: ChangeEvent<HTMLInputElement>) => {
-                          setText(event.target.value);
+                          setName(event.target.value);
                         }}
                       ></Input>
                     </div>
@@ -120,9 +161,10 @@ const CreateChatbot: FC = () => {
                       <Textarea
                         id="text"
                         className="h-56 whitespace-pre"
-                        onChange={(
-                          event: ChangeEvent<HTMLTextAreaElement>,
-                        ) => {}}
+                        value={text}
+                        onChange={(event: ChangeEvent<HTMLTextAreaElement>) => {
+                          setText(event.target.value);
+                        }}
                       ></Textarea>
                     </div>
                   </CardContent>
@@ -141,13 +183,29 @@ const CreateChatbot: FC = () => {
                       <div className="flex space-x-2">
                         <Input
                           id="crawl"
-                          value={text}
+                          value={crawlURL}
                           onChange={(event: ChangeEvent<HTMLInputElement>) => {
-                            setText(event.target.value);
+                            const value = event.target.value;
+                            if (validator.isURL(value)) {
+                              setErrorMessage('');
+                            } else setErrorMessage('Invalid URL');
+                            setCrawlURL(value);
                           }}
                           placeholder="https://www.example.com"
                         ></Input>
-                        <Button variant={'plain'}>Fetch links</Button>
+                        <Button
+                          variant={'plain'}
+                          onClick={crawlWebsiteHandler}
+                          loadingMessage="Crawling..."
+                          loading={crawling}
+                        >
+                          {crawlURL.length > 1
+                            ? 'Fetch more links'
+                            : 'Fetch Links'}
+                        </Button>
+                      </div>
+                      <div className="my-2 text-sm text-rose-600">
+                        {crawlURL && errorMessage ? errorMessage : null}
                       </div>
                       <span className="py-4 text-sm text-zinc-600">
                         This will crawl all the links starting with the URL (not
@@ -177,7 +235,11 @@ const CreateChatbot: FC = () => {
                           }}
                           placeholder="https://www.example.com/sitemap.xml"
                         ></Input>
-                        <Button variant={'plain'} loadingMessage="">
+                        <Button
+                          variant={'plain'}
+                          loadingMessage="Fetching..."
+                          onClick={crawlSiteMapHandler}
+                        >
                           Load sitemap
                         </Button>
                       </div>
@@ -189,6 +251,23 @@ const CreateChatbot: FC = () => {
                       >
                         Included Links
                       </Label>
+                      {crawlURLs.map((data) => (
+                        <div
+                          className="relative mt-2 rounded-md shadow-sm"
+                          key={data.id}
+                        >
+                          <div className="flex items-center">
+                            <Input value={data.url} disabled />
+                            <p className="ml-1 w-12 text-xs">{data.size}</p>
+                            <button className="text-zinc-600 hover:text-zinc-900">
+                              <Trash2
+                                className="ml-1 h-4 w-4 text-red-600"
+                                onClick={() => onRemoveSelected(data.id)}
+                              />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </CardContent>
                 </Card>
@@ -202,19 +281,39 @@ const CreateChatbot: FC = () => {
                   <p className="text-bold text-lg">Included Sources</p>
                 </CardTitle>
                 <CardDescription>
-                  <p className={cn('text-sm', { hidden: !hasFiles })}>
+                  <span className={cn('text-sm', { hidden: !hasFiles })}>
                     {`${pluralize(
                       pickedFiles?.length || 0,
                       'file',
                       'files',
                     )} added`}
-                  </p>
+                  </span>
+                  <span className={cn('text-sm', { hidden: !hasText })}>
+                    {` | `}
+                  </span>
+                  <span className={cn('text-sm', { hidden: !hasText })}>
+                    {`${text.length} text input chars`}
+                  </span>
+                  <span
+                    className={cn('text-sm', {
+                      hidden: !hasWebsiteOrSitemapURL,
+                    })}
+                  >
+                    {` | `}
+                  </span>
+                  <span
+                    className={cn('text-sm', {
+                      hidden: !hasWebsiteOrSitemapURL,
+                    })}
+                  >
+                    {`${crawlURLs.length} Links`}
+                  </span>
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <Button
                   className="w-full"
-                  variant={hasFiles ? 'glow' : 'plain'}
+                  variant={hasSources ? 'glow' : 'plain'}
                   loading={loading}
                   loadingMessage="creando..."
                   onClick={handleClick}

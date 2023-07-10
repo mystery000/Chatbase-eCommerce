@@ -1,4 +1,10 @@
-import { SourceType, VisibilityType } from './types';
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json }
+  | Json[];
 
 export type Contact = {
   title: string;
@@ -18,7 +24,7 @@ export type Chatbot = {
   ip_limit: number;
   ip_limit_message: string;
   ip_limit_timeframe: number;
-  initial_messages?: string[];
+  initial_messages?: JSON;
   chatbot_icon?: string;
   profile_icon?: string;
   contact_info: Contact;
@@ -30,3 +36,6 @@ export type Source = {
   content: string;
   size: number;
 };
+
+export type VisibilityType = 'public' | 'protected' | 'private';
+export type SourceType = 'file' | 'text' | 'crawl' | 'sitemap';
