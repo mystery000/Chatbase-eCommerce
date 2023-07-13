@@ -12,7 +12,7 @@ export type Contact = {
   email: { active: boolean; label: string };
   phone: { active: boolean; label: string };
 };
-export type VisibilityType = 'PUBLIC' | 'PROTECTED' | 'PRIVATE';
+export type VisibilityType = 'public' | 'protected' | 'private';
 
 export type Chatbot = {
   chatbot_id: string;

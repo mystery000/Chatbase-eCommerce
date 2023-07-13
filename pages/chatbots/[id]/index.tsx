@@ -2,6 +2,7 @@ import { useState, ChangeEvent } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
 import { Slider } from '@/components/ui/slider';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const ChatbotPanel = dynamic(
   () => import('@/components/chatbots/ChatbotPanel'),
@@ -10,6 +11,7 @@ const AppLayout = dynamic(() => import('@/components/layouts/AppLayout'));
 const RetrainChatbot = dynamic(
   () => import('@/components/chatbots/RetrainChatbot'),
 );
+
 import {
   Card,
   CardContent,
@@ -47,6 +49,7 @@ import { toast } from 'react-hot-toast';
 import { deleteChatbot } from '@/lib/api';
 import useChatbot from '@/lib/hooks/use-chatbot';
 import useSources from '@/lib/hooks/use-sources';
+import { Contact } from '@/types/database';
 
 const Chatbot = () => {
   const router = useRouter();
@@ -61,7 +64,6 @@ const Chatbot = () => {
     isLoading: isLoadingSources,
     mutate: mutateSources,
   } = useSources();
-
   const [openDeleteDialog, setOpenDeleteDialog] = useState<boolean>(false);
   const [openShareDialog, setOpenShareDialog] = useState<boolean>(false);
   const [requireLogin, setRequireLogin] = useState<boolean>(false);
@@ -111,6 +113,12 @@ const Chatbot = () => {
 
     setSharing(false);
   };
+
+  const characters = sources.reduce((sum, source) => {
+    return sum + source.characters;
+  }, 0);
+
+  const contact: Contact = JSON.parse(`${chatbot?.contact}`);
 
   return (
     <>
@@ -259,7 +267,7 @@ const Chatbot = () => {
                     <div className="pt-8">
                       <Label htmlFor="characters">Number of characters</Label>
                       <p id="characters" className="font-bold">
-                        29489
+                        {characters}
                       </p>
                     </div>
                     <div className="pt-8">
@@ -342,7 +350,9 @@ const Chatbot = () => {
                     <div className="pt-8">
                       <div className="flex justify-between">
                         <Label htmlFor="rate_limit">Rate Limiting</Label>
-                        <Button variant={'secondary'}>Reset</Button>
+                        <Button variant={'secondary'} size={'sm'}>
+                          Reset
+                        </Button>
                       </div>
                       <p className="mt-2 text-sm text-zinc-500">
                         Limit the number of messages sent from one device on the
@@ -377,30 +387,114 @@ const Chatbot = () => {
                         />
                       </div>
                     </div>
-                    <div className="pt-8">
+                    <div className="w-1/2 pt-8">
                       <Label>Collect Customer Info</Label>
-                      <div className="flex justify-between">
+                      <div className="my-1 flex justify-between">
                         <label className="block pb-2 text-sm font-semibold">
                           Title
                         </label>
-                        <Button variant={'secondary'}>Reset</Button>
+                        <Button variant={'secondary'} size={'sm'}>
+                          Reset
+                        </Button>
                       </div>
-                      <Input
-                        value="Let us know how to contact you"
-                        className="mb-4"
-                      />
+                      <Input className="mb-4" value={contact.title} />
+
                       <label className="block pb-2 text-sm font-medium text-gray-700">
                         Name
                       </label>
-                      <Switch />
+                      <Switch checked={contact.name.active} />
+                      {contact.name.active && (
+                        <>
+                          <div className="my-1 flex justify-end">
+                            <Button variant={'secondary'} size={'sm'}>
+                              Reset
+                            </Button>
+                          </div>
+                          <Input className="mb-4" value={contact.name.label} />
+                        </>
+                      )}
+
                       <label className="block pb-2 text-sm font-medium text-gray-700">
                         Email
                       </label>
-                      <Switch />
+                      <Switch checked={contact.email.active} />
+                      {contact.email.active && (
+                        <>
+                          <div className="my-1 flex justify-end">
+                            <Button variant={'secondary'} size={'sm'}>
+                              Reset
+                            </Button>
+                          </div>
+                          <Input className="mb-4" value={contact.email.label} />
+                        </>
+                      )}
                       <label className="block pb-2 text-sm font-medium text-gray-700">
                         Phone Number
                       </label>
-                      <Switch />
+                      <Switch checked={contact.phone.active} />
+                      {contact.phone.active && (
+                        <>
+                          <div className="my-1 flex justify-end">
+                            <Button variant={'secondary'} size={'sm'}>
+                              Reset
+                            </Button>
+                          </div>
+                          <Input className="mb-4" value={contact.phone.label} />
+                        </>
+                      )}
+                    </div>
+                    <div className="pt-8">
+                      <h4 className="mt-5 text-lg font-semibold">
+                        Chat Interface
+                      </h4>
+                      <h4 className="mb-8 text-sm text-zinc-600">
+                        applies when embedded on a website
+                      </h4>
+                      <div className="flex flex-col justify-between space-x-8 sm:flex-row">
+                        <div className="w-1/2 flex-1">
+                          <div className="pb-8">
+                            <div className="flex justify-between">
+                              <label className="block text-sm font-medium text-gray-700">
+                                Initial Messages
+                              </label>
+                              <Button variant={'secondary'} size={'sm'}>
+                                Reset
+                              </Button>
+                            </div>
+                            <div className="mt-1">
+                              <Textarea
+                                value={JSON.parse(
+                                  `${chatbot.initial_messages}`,
+                                )}
+                                onChange={(
+                                  event: ChangeEvent<HTMLTextAreaElement>,
+                                ) => {}}
+                              ></Textarea>
+                              <p className="mt-2 text-sm text-zinc-500">
+                                Enter each message in a new line.
+                              </p>
+                            </div>
+                          </div>
+                          <div className="pb-8">
+                            <label className="mb-1 block text-sm font-medium text-gray-700">
+                              Update chat icon
+                            </label>
+                            <Input type="file" accept="image/*" />
+                          </div>
+                          <div className="pb-8">
+                            <label className="block text-sm font-medium text-gray-700">
+                              Remove chat icon
+                            </label>
+                            <Checkbox />
+                          </div>
+                        </div>
+                        <div className="w-1/2 flex-1">
+                          <ChatbotPanel chatbotId={chatbot.chatbot_id} />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="mt-2 flex justify-end">
+                      <Button className="w-full">Save Changes</Button>
                     </div>
                   </CardContent>
                 </Card>
