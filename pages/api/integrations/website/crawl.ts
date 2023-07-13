@@ -29,7 +29,7 @@ export default async function handler(
     const websiteRes = await fetch(url);
     if (websiteRes.ok) {
       const content = await websiteRes.text();
-      console.log(content);
+
       return res.status(200).json({ size: content.length || 0 });
     }
   } catch {

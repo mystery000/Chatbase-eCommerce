@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import excuteQuery from '@/lib/mysql';
-import { Chatbot } from '@/types/supabase';
+import { Chatbot } from '@/types/database';
 import { BAD_REQUEST, ERROR, NOT_FOUND, SUCCESS } from '@/config/HttpStatus';
 import { pinecone } from '@/lib/pinecone/pinecone-client';
 import { PINECONE_INDEX_NAME } from '@/config/pinecone';

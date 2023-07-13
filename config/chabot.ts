@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-empty-function */
-import { ModelConfig, VisibilityType } from '@/types/types';
+import { ModelConfig } from '@/types/types';
+import { VisibilityType } from '@/types/database';
 
 export const DEFAULT_PROMPT_TEMPLATE = {
   name: 'Default',

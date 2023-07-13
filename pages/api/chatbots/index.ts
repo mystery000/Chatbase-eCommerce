@@ -1,24 +1,29 @@
-import { BAD_METHOD, BAD_REQUEST, ERROR, SUCCESS } from '@/config/HttpStatus';
+import * as fs from 'fs';
+import { v4 as uuidv4 } from 'uuid';
 import excuteQuery from '@/lib/mysql';
 import { Chatbot } from '@/types/database';
+import { parseForm } from '@/lib/parse-form';
+import { Document } from 'langchain/document';
 import { NextApiRequest, NextApiResponse } from 'next';
-import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
-import { OpenAIEmbeddings } from 'langchain/embeddings/openai';
-import { PineconeStore } from 'langchain/vectorstores/pinecone';
+import { PINECONE_INDEX_NAME } from '@/config/pinecone';
 import { pinecone } from '@/lib/pinecone/pinecone-client';
 import { PDFLoader } from 'langchain/document_loaders/fs/pdf';
-import { PINECONE_INDEX_NAME } from '@/config/pinecone';
-import { DirectoryLoader } from 'langchain/document_loaders/fs/directory';
+import { OpenAIEmbeddings } from 'langchain/embeddings/openai';
+import { PineconeStore } from 'langchain/vectorstores/pinecone';
 import { TextLoader } from 'langchain/document_loaders/fs/text';
 import { DocxLoader } from 'langchain/document_loaders/fs/docx';
+import { BaseDocumentLoader } from 'langchain/document_loaders/base';
+import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
 import { UnstructuredLoader } from 'langchain/document_loaders/fs/unstructured';
-import { parseForm } from '@/lib/parse-form';
-import requestIp from 'request-ip';
+import { PuppeteerWebBaseLoader } from 'langchain/document_loaders/web/puppeteer';
+import { BAD_METHOD, BAD_REQUEST, ERROR, SUCCESS } from '@/config/HttpStatus';
+
 import {
   DEFAULT_MODEL_CONFIG,
   DEFAULT_CONFIG_VALUES,
   DEFAULT_CONTACT_INFO,
 } from '@/config/chabot';
+import { url } from 'inspector';
 
 type Data = { status?: string; error?: string } | Chatbot[] | Chatbot;
 
@@ -28,8 +33,6 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<Data>,
 ) {
-  const detectedIp = requestIp.getClientIp(req);
-
   if (!req.method || !allowMethods.includes(req.method)) {
     res.setHeader('Allow', allowMethods);
     return res
@@ -52,48 +55,125 @@ export default async function handler(
         .json({ error: `Internal Server Error: due to ${error}` });
     }
   } else if (req.method === 'POST') {
-    console.log(`Notification: ${detectedIp} is creating new chatbot.`);
     try {
-      const { fields, chatbot_id } = await parseForm(req);
+      const { fields, files, chatbot_id } = await parseForm(req);
       const name = fields.name[0];
+      const text = fields.text[0];
+      const urls = fields.urls;
       const created_at = new Date();
+
       if (!name || !chatbot_id) {
         return res.status(BAD_REQUEST).json({
           error: 'There is no chatbot name in the request body.',
         });
       }
+
+      if (!files && !urls && !text)
+        return res.status(BAD_REQUEST).json({
+          error: 'There is no provided sources',
+        });
+
       try {
-        console.log('Loading documents...');
-        /*load raw docs from the all files in the directory */
-        const directoryLoader = new DirectoryLoader(
-          `public/sources/${chatbot_id}`,
-          {
-            '.pdf': (path) => new PDFLoader(path),
-            '.txt': (path) => new TextLoader(path),
-            '.docx': (path) => new DocxLoader(path),
-            '.doc': (path) => new UnstructuredLoader(path),
-          },
-        );
-        // const loader = new PDFLoader(filePath);
-        const rawDocs = await directoryLoader.load();
-        console.log('Done!');
-        /* Split text into chunks */
         const textSplitter = new RecursiveCharacterTextSplitter({
           chunkSize: 1000,
           chunkOverlap: 200,
         });
-        const docs = await textSplitter.splitDocuments(rawDocs);
-        console.log('creating vector store...');
         /*create and store the embeddings in the vectorStore*/
         const embeddings = new OpenAIEmbeddings();
         const index = pinecone.Index(PINECONE_INDEX_NAME); //change to your own index name
+
         // embed the PDF documents
-        await PineconeStore.fromDocuments(docs, embeddings, {
+        const pineconeStore = new PineconeStore(embeddings, {
           pineconeIndex: index,
           namespace: chatbot_id,
           textKey: 'text',
         });
-        console.log('created successfully.');
+
+        /*load raw docs from the all files in the directory */
+        fs.readdirSync(`public/sources/${chatbot_id}`).forEach(async (file) => {
+          const path = `public/sources/${chatbot_id}/${file}`;
+          let loader: BaseDocumentLoader = new PDFLoader(path);
+          if (path.endsWith('.pdf')) loader = new PDFLoader(path);
+          if (path.endsWith('.txt')) loader = new TextLoader(path);
+          if (path.endsWith('.doc')) loader = new UnstructuredLoader(path);
+          if (path.endsWith('.docx')) loader = new DocxLoader(path);
+          const rawDocs = await loader.load();
+          /* Split text into chunks */
+
+          const docs = await textSplitter.splitDocuments(rawDocs);
+          const characters = docs.reduce(
+            (sum, doc) => sum + doc.pageContent.length,
+            0,
+          );
+
+          const sourceId = uuidv4();
+          const vector_ids = docs.map((_, idx) => `${sourceId}-${idx}`);
+          pineconeStore.addDocuments(docs, vector_ids);
+
+          await excuteQuery({
+            query:
+              'INSERT INTO sources(chatbot_id, type, content, characters, source_id, vectors) VALUES (?,?,?,?,?,?)',
+            values: [
+              chatbot_id,
+              'FILE',
+              file,
+              characters,
+              sourceId,
+              docs.length,
+            ],
+          });
+        });
+
+        if (text) {
+          const docs = await textSplitter.createDocuments([text]);
+          const sourceId = uuidv4();
+          const vector_ids = docs.map((_, idx) => `${sourceId}-${idx}`);
+          pineconeStore.addDocuments(docs, vector_ids);
+
+          await excuteQuery({
+            query:
+              'INSERT INTO sources(chatbot_id, type, content, characters, source_id, vectors) VALUES (?,?,?,?,?,?)',
+            values: [
+              chatbot_id,
+              'TEXT',
+              text,
+              text.length,
+              sourceId,
+              docs.length,
+            ],
+          });
+        }
+
+        if (urls && Array.isArray(urls)) {
+          urls.forEach(async (url) => {
+            const loader = new PuppeteerWebBaseLoader(url);
+            const rawDocs = await loader.load();
+            /* Split text into chunks */
+
+            const docs = await textSplitter.splitDocuments(rawDocs);
+            const characters = docs.reduce(
+              (sum, doc) => sum + doc.pageContent.length,
+              0,
+            );
+
+            const sourceId = uuidv4();
+            const vector_ids = docs.map((_, idx) => `${sourceId}-${idx}`);
+            pineconeStore.addDocuments(docs, vector_ids);
+
+            await excuteQuery({
+              query:
+                'INSERT INTO sources(chatbot_id, type, content, characters, source_id, vectors) VALUES (?,?,?,?,?,?)',
+              values: [
+                chatbot_id,
+                'WEBSITE',
+                url,
+                characters,
+                sourceId,
+                docs.length,
+              ],
+            });
+          });
+        }
       } catch (error) {
         console.log('error', error);
         return res
@@ -122,12 +202,12 @@ export default async function handler(
           ip_limit_message,
           ip_limit_timeframe,
           initial_messages,
-          contact_info: DEFAULT_CONTACT_INFO,
+          contact: DEFAULT_CONTACT_INFO,
         };
 
         await excuteQuery({
           query:
-            'insert into chatbots (chatbot_id, name, created_at, promptTemplate, model, temperature, visibility, ip_limit, ip_limit_message, ip_limit_timeframe, initial_messages, contact_info) values (?,?,?,?,?,?,?,?,?,?,?,?)',
+            'INSERT INTO chatbots (chatbot_id, name, created_at, promptTemplate, model, temperature, visibility, ip_limit, ip_limit_message, ip_limit_timeframe, initial_messages, contact) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',
           values: [
             chatbot_id,
             name,
@@ -140,9 +220,16 @@ export default async function handler(
             ip_limit_message,
             ip_limit_timeframe,
             JSON.stringify(initial_messages),
-            JSON.stringify(chatbot.contact_info),
+            JSON.stringify(chatbot.contact),
           ],
         });
+
+        await excuteQuery({
+          query:
+            'INSERT INTO sources (chatbot_id, type, content) VALUES (?,?,?)',
+          values: [chatbot_id],
+        });
+
         return res.status(SUCCESS).json(chatbot);
       } catch (error) {
         return res

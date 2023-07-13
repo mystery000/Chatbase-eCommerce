@@ -12,6 +12,7 @@ export type Contact = {
   email: { active: boolean; label: string };
   phone: { active: boolean; label: string };
 };
+export type VisibilityType = 'PUBLIC' | 'PROTECTED' | 'PRIVATE';
 
 export type Chatbot = {
   chatbot_id: string;
@@ -24,18 +25,19 @@ export type Chatbot = {
   ip_limit: number;
   ip_limit_message: string;
   ip_limit_timeframe: number;
-  initial_messages?: JSON;
   chatbot_icon?: string;
   profile_icon?: string;
-  contact_info: Contact;
+  contact: Contact;
+  initial_messages?: JSON;
 };
+
+export type SourceType = 'FILE' | 'TEXT' | 'WEBSITE' | 'SITEMAP';
 
 export type Source = {
   chatbot_id: string;
   type: SourceType;
   content: string;
-  size: number;
+  characters: number;
+  source_id: string;
+  vectors: number;
 };
-
-export type VisibilityType = 'public' | 'protected' | 'private';
-export type SourceType = 'file' | 'text' | 'crawl' | 'sitemap';

@@ -1,7 +1,7 @@
-import { BAD_METHOD, ERROR, SUCCESS } from '@/config/HttpStatus';
 import excuteQuery from '@/lib/mysql';
-import { Source } from '@/types/database';
+import { Chatbot, Source } from '@/types/database';
 import { NextApiRequest, NextApiResponse } from 'next';
+import { BAD_METHOD, BAD_REQUEST, ERROR, SUCCESS } from '@/config/HttpStatus';
 
 type Data = { status?: string; error?: string } | Source[] | Source;
 
@@ -17,12 +17,17 @@ export default async function handler(
       .status(BAD_METHOD)
       .json({ error: `Method ${req.method} Not Allowed` });
   }
-
+  const chatbotId = req.query.id as Chatbot['chatbot_id'];
   if (req.method === 'GET') {
+    if (!chatbotId) {
+      return res
+        .status(BAD_REQUEST)
+        .json({ error: 'Invalid request: chatbot id is missing now.' });
+    }
     try {
       const sources = await excuteQuery({
-        query: 'SELECT * FROM sources',
-        values: [],
+        query: 'SELECT * FROM sources WHERE chatbot_id=(?)',
+        values: [chatbotId],
       });
       return res.status(SUCCESS).json(sources || []);
     } catch (error) {

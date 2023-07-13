@@ -1,9 +1,17 @@
 import { Chatbot } from '@/types/database';
 import { getResponseOrThrow } from './utils';
+import { url } from 'inspector';
 
-export const createChatbot = async (name: string, documents: File[]) => {
+export const createChatbot = async (
+  name: string,
+  documents: File[],
+  text: string,
+  urls: string[],
+) => {
   const payload = new FormData();
   payload.append('name', name);
+  payload.append('text', text);
+  urls.map((url) => payload.append('urls', url));
   documents.forEach((document) => payload.append('documents', document));
 
   const res = await fetch('/api/chatbots', {

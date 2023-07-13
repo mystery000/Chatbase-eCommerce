@@ -44,19 +44,36 @@ const CreateChatbot: FC = () => {
     { size: number; url: string; id: string }[]
   >([]);
   const [crawling, setCrawling] = useState<boolean>(false);
+  const [sitemap, setSitemap] = useState('');
   const [errorMessage, setErrorMessage] = useState<string>('');
 
   const { chatbots, mutate: mutateChatbots } = useChatbots();
 
-  const handleClick = useCallback(async () => {
+  const hasFiles = pickedFiles?.length || false;
+  const hasText = text.length;
+  const hasWebsiteOrSitemapURL = crawlURLs.length;
+  const hasSources = hasFiles || hasText || hasWebsiteOrSitemapURL;
+
+  const handleSubmit = useCallback(async () => {
     setLoading(true);
     try {
-      if (!pickedFiles.length) {
-        toast.error('No files selected');
+      if (!name) {
+        toast.error("Please enter the chatbot's name.");
         setLoading(false);
         return;
       }
-      const newChatbot = await createChatbot(pickedFiles[0].name, pickedFiles);
+      if (!hasSources) {
+        toast.error('Please add your sources');
+        setLoading(false);
+        return;
+      }
+
+      const newChatbot = await createChatbot(
+        name,
+        pickedFiles || [],
+        text || '',
+        crawlURLs.map((data) => data.url),
+      );
       await mutateChatbots([...(chatbots || []), newChatbot]);
       setLoading(false);
       toast.success('Your chatbot is trained and ready.');
@@ -67,14 +84,10 @@ const CreateChatbot: FC = () => {
       setLoading(false);
       console.log('Error', error);
     }
-  }, [pickedFiles]);
-
-  const hasFiles = pickedFiles?.length || false;
-  const hasText = text.length;
-  const hasWebsiteOrSitemapURL = crawlURLs.length;
-  const hasSources = hasFiles || hasText || hasWebsiteOrSitemapURL;
+  }, [pickedFiles, name, text, crawlURLs, hasSources]);
 
   const handleFileEvent = (event: React.ChangeEvent<HTMLInputElement>) => {
+    console.log(event.target.files);
     const files = Array.from(event.target.files || []);
     const fileLength = files?.length || 0;
     if (fileLength > MAX_FILES) {
@@ -134,7 +147,7 @@ const CreateChatbot: FC = () => {
                       <div className="mt-4 w-full">
                         <Input
                           type="file"
-                          accept="text/plain, application/pdf, application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                          accept=".txt, .pdf, .doc, .docx, .odt, .odg, .ods, .odp, .odf"
                           onChange={handleFileEvent}
                           multiple
                         />
@@ -229,9 +242,9 @@ const CreateChatbot: FC = () => {
                       <div className="flex space-x-2">
                         <Input
                           id="sitemap"
-                          value={text}
+                          value={sitemap}
                           onChange={(event: ChangeEvent<HTMLInputElement>) => {
-                            setText(event.target.value);
+                            setSitemap(event.target.value);
                           }}
                           placeholder="https://www.example.com/sitemap.xml"
                         ></Input>
@@ -288,7 +301,12 @@ const CreateChatbot: FC = () => {
                       'files',
                     )} added`}
                   </span>
-                  <span className={cn('text-sm', { hidden: !hasText })}>
+                  <span
+                    className={cn('text-sm', {
+                      hidden:
+                        !hasFiles || (!hasText && !hasWebsiteOrSitemapURL),
+                    })}
+                  >
                     {` | `}
                   </span>
                   <span className={cn('text-sm', { hidden: !hasText })}>
@@ -296,7 +314,7 @@ const CreateChatbot: FC = () => {
                   </span>
                   <span
                     className={cn('text-sm', {
-                      hidden: !hasWebsiteOrSitemapURL,
+                      hidden: !hasText || !hasWebsiteOrSitemapURL,
                     })}
                   >
                     {` | `}
@@ -316,7 +334,7 @@ const CreateChatbot: FC = () => {
                   variant={hasSources ? 'glow' : 'plain'}
                   loading={loading}
                   loadingMessage="creando..."
-                  onClick={handleClick}
+                  onClick={handleSubmit}
                 >
                   Create Chatbot
                 </Button>

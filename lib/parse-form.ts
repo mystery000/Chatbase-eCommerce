@@ -51,6 +51,11 @@ export const parseForm = async (
             'application/pdf',
             'application/msword',
             'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'application/vnd.oasis.opendocument.text',
+            'application/vnd.oasis.opendocument.spreadsheet',
+            'application/vnd.oasis.opendocument.presentation',
+            'application/vnd.oasis.opendocument.graphics',
+            'application/vnd.oasis.opendocument.formula',
           ].includes(part.mimetype || 'unsupported') ||
             false)
         );
