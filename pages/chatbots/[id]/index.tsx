@@ -64,12 +64,14 @@ const Chatbot = () => {
     isLoading: isLoadingSources,
     mutate: mutateSources,
   } = useSources();
+
   const [openDeleteDialog, setOpenDeleteDialog] = useState<boolean>(false);
   const [openShareDialog, setOpenShareDialog] = useState<boolean>(false);
   const [requireLogin, setRequireLogin] = useState<boolean>(false);
   const [sharing, setSharing] = useState<boolean>(false);
   const [shared, setShared] = useState<boolean>(false);
-
+  const [profileIcon, setProfileIcon] = useState<string>('');
+  const [chatbotIcon, setChatbotIcon] = useState<string>('');
   if (isLoadingChatbot || isLoadingSources) {
     return (
       <>
@@ -114,6 +116,13 @@ const Chatbot = () => {
     setSharing(false);
   };
 
+  const handleProfileIcon = (e: ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) setProfileIcon(URL.createObjectURL(e.target.files[0]));
+  };
+
+  const handleChatbotIcon = (e: ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) setChatbotIcon(URL.createObjectURL(e.target.files[0]));
+  };
   const characters = sources.reduce((sum, source) => {
     return sum + source.characters;
   }, 0);
@@ -253,7 +262,11 @@ const Chatbot = () => {
                 </TabsTrigger>
               </TabsList>
               <TabsContent value="chatbot">
-                <ChatbotPanel chatbotId={chatbot.chatbot_id} />
+                <ChatbotPanel
+                  chatbotId={chatbot.chatbot_id}
+                  playing={true}
+                  profileIcon={chatbot.profile_icon}
+                />
               </TabsContent>
               <TabsContent value="settings">
                 <Card>
@@ -477,19 +490,55 @@ const Chatbot = () => {
                           </div>
                           <div className="pb-8">
                             <label className="mb-1 block text-sm font-medium text-gray-700">
-                              Update chat icon
+                              Update profile icon
                             </label>
-                            <Input type="file" accept="image/*" />
+                            <Input
+                              type="file"
+                              accept="image/*"
+                              onChange={handleProfileIcon}
+                            />
                           </div>
                           <div className="pb-8">
                             <label className="block text-sm font-medium text-gray-700">
-                              Remove chat icon
+                              Remove profile icon
                             </label>
                             <Checkbox />
                           </div>
+                          <div className="pb-8">
+                            <label className="mb-1 block text-sm font-medium text-gray-700">
+                              Update chatbot icon
+                            </label>
+                            <Input
+                              type="file"
+                              accept="image/*"
+                              onChange={handleChatbotIcon}
+                            />
+                            <div className="mx-auto w-fit">
+                              <label className="my-2 block text-center text-sm font-medium text-gray-700">
+                                Preview
+                              </label>
+                              <Card>
+                                <CardContent className="p-0">
+                                  <img
+                                    src={chatbotIcon || chatbot.chatbot_icon}
+                                    className="mx-auto h-40 w-40 rounded-t-sm border-none object-cover"
+                                    loading="lazy"
+                                  />
+                                </CardContent>
+                                <CardFooter className="select-none p-2">
+                                  <p className="w-8 grow truncate text-center">
+                                    {chatbot.name}
+                                  </p>
+                                </CardFooter>
+                              </Card>
+                            </div>
+                          </div>
                         </div>
                         <div className="w-1/2 flex-1">
-                          <ChatbotPanel chatbotId={chatbot.chatbot_id} />
+                          <ChatbotPanel
+                            chatbotId={chatbot.chatbot_id}
+                            profileIcon={profileIcon || chatbot.profile_icon}
+                          />
                         </div>
                       </div>
                     </div>

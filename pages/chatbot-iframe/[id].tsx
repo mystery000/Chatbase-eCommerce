@@ -16,7 +16,7 @@ const SharedChatbot: FC = () => {
 
   return (
     <>
-      <ChatbotPanel chatbotId={chatbot.chatbot_id} />
+      <ChatbotPanel chatbotId={chatbot.chatbot_id} playing={true} />
     </>
   );
 };

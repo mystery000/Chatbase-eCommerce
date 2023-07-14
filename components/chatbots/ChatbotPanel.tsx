@@ -24,9 +24,15 @@ import { useRouter } from 'next/router';
 
 type ChatbotPanelProps = {
   chatbotId: string;
+  playing?: boolean;
+  profileIcon?: string;
 };
 
-const ChatbotPanel = ({ chatbotId }: ChatbotPanelProps) => {
+const ChatbotPanel = ({
+  chatbotId,
+  playing,
+  profileIcon,
+}: ChatbotPanelProps) => {
   const [query, setQuery] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -43,12 +49,16 @@ const ChatbotPanel = ({ chatbotId }: ChatbotPanelProps) => {
   const inputBoxRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    if (!playing) return;
     inputBoxRef.current?.focus();
-  }, []);
+  }, [playing]);
 
   const submitPrompt = useCallback(
     async (e: SyntheticEvent<EventTarget>) => {
       e.preventDefault();
+
+      if (!playing) return;
+
       setError(null);
       if (!query) {
         toast.error('Please input a question');
@@ -104,7 +114,7 @@ const ChatbotPanel = ({ chatbotId }: ChatbotPanelProps) => {
         console.log('error', error);
       }
     },
-    [query, chatbotId],
+    [query, chatbotId, playing],
   );
 
   //prevent empty submissions
@@ -115,6 +125,10 @@ const ChatbotPanel = ({ chatbotId }: ChatbotPanelProps) => {
       e.preventDefault();
     }
   };
+
+  const handleRefresh = useCallback(() => {
+    if (playing) setMessageState({ messages: [] });
+  }, [playing]);
 
   return (
     <Card>
@@ -128,12 +142,12 @@ const ChatbotPanel = ({ chatbotId }: ChatbotPanelProps) => {
                   alt="profile picture"
                   width={36}
                   height={36}
-                  src="https://backend.chatbase.co/storage/v1/object/public/chatbots-profile-pictures/41291895-cdbe-487c-b1a3-fb65ce5ebde6/2WRGxVZYEi6cE-K1XcIQj.jfif?width=48&quality=100 1x, https://backend.chatbase.co/storage/v1/object/public/chatbots-profile-pictures/41291895-cdbe-487c-b1a3-fb65ce5ebde6/2WRGxVZYEi6cE-K1XcIQj.jfif?width=96&quality=100 2x"
+                  src={profileIcon}
                 />
                 <h1 className="text-lg font-bold text-zinc-700">Mohamed</h1>
               </div>
               <button className="text-sm text-zinc-700 hover:text-zinc-600">
-                <RefreshCw onClick={() => setMessageState({ messages: [] })} />
+                <RefreshCw onClick={handleRefresh} />
               </button>
             </div>
             <div ref={messageListRef}>
