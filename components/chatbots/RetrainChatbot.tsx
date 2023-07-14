@@ -1,71 +1,62 @@
 import dynamic from 'next/dynamic';
-import { useRouter } from 'next/router';
 import { FC, useCallback, useState, ChangeEvent } from 'react';
-
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Upload } from 'lucide-react';
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-
+} from '../ui/card';
+import { useDropzone } from 'react-dropzone';
 import cn from 'classnames';
-import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-
-import { pluralize } from '@/lib/utils';
-import toast from 'react-hot-toast';
-import { createChatbot } from '@/lib/api';
-import useChatbots from '@/lib/hooks/use-chatbots';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import useSources from '@/lib/hooks/use-sources';
+import { Trash2 } from 'lucide-react';
+import { Textarea } from '../ui/textarea';
+import { Label } from '../ui/label';
+import { Input } from '../ui/input';
 const Button = dynamic(() => import('@/components/ui/buttoneEx'));
 
 const RetrainChatbot: FC = () => {
-  const MAX_FILES = 5;
-  const router = useRouter();
-  const [loading, setLoading] = useState<boolean>(false);
-
-  // Data Sources files, text, website, sitemap, QA
+  const { sources, mutate, isLoading } = useSources();
+  const [dragging, setDragging] = useState(false);
   const [pickedFiles, setPickFiles] = useState<File[]>([]);
-  const [text, setText] = useState<string>('');
+  const { getRootProps, getInputProps, acceptedFiles } = useDropzone({
+    noKeyboard: true,
+    maxFiles: 1000,
+    maxSize: 1_000_000,
+    accept: {
+      'text/plain': ['.txt'],
+      'application/pdf': ['.pdf'],
+      'application/msword': ['.doc'],
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+        ['.docx'],
+      'application/vnd.oasis.opendocument.graphics': ['.odg'],
+    },
+    onDragEnter: () => {
+      setDragging(true);
+    },
+    onDragLeave: () => {
+      setDragging(false);
+    },
+    onDrop: () => {
+      setDragging(false);
+    },
+  });
 
-  const { chatbots, mutate: mutateChatbots } = useChatbots();
+  const hasFiles = pickedFiles?.length > 0;
 
-  const handleClick = useCallback(async () => {
-    setLoading(true);
-    try {
-      if (!pickedFiles.length) {
-        toast.error('No files selected');
-        setLoading(false);
-        return;
-      }
-      const newChatbot = await createChatbot(pickedFiles[0].name, pickedFiles);
-      await mutateChatbots([...(chatbots || []), newChatbot]);
-      setLoading(false);
-      toast.success('Your chatbot is trained and ready.');
-      setTimeout(() => {
-        router.push('/chatbots');
-      }, 500);
-    } catch (error) {
-      setLoading(false);
-      console.log('Error', error);
-    }
-  }, [pickedFiles]);
-
-  const hasFiles = pickedFiles?.length || 0;
-
-  const handleFileEvent = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files || []);
-    const fileLength = files?.length || 0;
-    if (fileLength > MAX_FILES) {
-      toast.error(`You can only add a maximum of ${MAX_FILES} files`);
-      return;
-    }
-    setPickFiles(files);
-  };
+  const file_chars = sources
+    .filter((source) => source.type === 'FILE')
+    .reduce((sum, source) => {
+      return sum + source.characters;
+    }, 0);
+  const text_chars = sources
+    .filter((source) => source.type === 'TEXT')
+    .reduce((sum, source) => {
+      return sum + source.characters;
+    }, 0);
 
   return (
     <>
@@ -78,143 +69,190 @@ const RetrainChatbot: FC = () => {
               <TabsTrigger value="sitoweb">Website</TabsTrigger>
             </TabsList>
             <TabsContent value="files">
-              <Card>
-                <CardHeader className="text-center ">
-                  <CardTitle>Upload File</CardTitle>
-                  <CardDescription>
-                    NOTE: Uploading a PDF using safari doesn't work, we're
-                    looking into the issue.
-                    <br /> Make sure the text is OCR, i.e. you can copy it.
-                  </CardDescription>
-                  <CardContent>
-                    <div className="mt-4 w-full">
-                      <Input
-                        type="file"
-                        accept="text/plain, application/pdf, application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                        onChange={handleFileEvent}
-                        multiple
-                      />
+              <div className="m-auto w-1/2 max-w-md">
+                <label className=" mb-2 mt-4 block text-center text-sm font-medium text-gray-900 dark:text-white">
+                  Upload Files
+                </label>
+                <div
+                  className={cn(
+                    'cursor-pointer rounded-lg border-2 border-dotted p-16 transition duration-300',
+                    {
+                      'border-fuchsia-600 bg-fuchsia-500 bg-opacity-[3%]':
+                        dragging,
+                      'border-fuchsia-600 bg-fuchsia-500 bg-opacity-[7%]':
+                        hasFiles,
+                    },
+                  )}
+                  {...getRootProps()}
+                >
+                  <input {...getInputProps()} />
+                  <div className="flex flex-col items-center justify-center gap-4">
+                    <Upload />
+                    <div className="items-center justify-center text-center">
+                      <p className="text-sm text-gray-600 ">
+                        Drag &amp; drop files here, or click to select files
+                      </p>
+                      <span
+                        className="text-xs text-gray-500 dark:text-gray-300"
+                        id="file_type_help"
+                      >
+                        Supported File Types: .txt, .pdf, .doc, .docx, .odt,
+                      </span>
                     </div>
-                  </CardContent>
-                </CardHeader>
-              </Card>
+                  </div>
+                </div>
+                <p
+                  className="mt-1 text-center text-sm text-gray-500 dark:text-gray-300"
+                  id="file_input_help"
+                >
+                  NOTE: Uploading a PDF using safari doesn't work, we're looking
+                  into the issue. Make sure the text is OCR'd, i.e. you can copy
+                  it.
+                </p>
+                <div className="pt-8">
+                  <div>
+                    <span className="b-2 font-semibold">Attached Files</span>
+                    <span className="ml-1 text-sm text-zinc-500">
+                      ({file_chars} chars)
+                    </span>
+                  </div>
+                  {sources
+                    .filter((item) => item.type === 'FILE')
+                    .map((source) => (
+                      <div key={source.source_id}>
+                        <div className="flex justify-between pb-4">
+                          <div>
+                            <span>{source.content}</span>
+                            <span className="ml-1 text-sm text-zinc-500">
+                              ({source.characters} chars)
+                            </span>
+                          </div>
+                          <button className="text-zinc-600 hover:text-zinc-900">
+                            <Trash2 className="ml-1 h-4 w-4 text-red-600" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </div>
             </TabsContent>
             <TabsContent value="testo">
-              <Card>
-                <CardContent>
-                  <div className="pt-8">
-                    <Label htmlFor="chatbotName">Chatbot Name</Label>
-                    <Input
-                      id="chatbotName"
-                      value={text}
-                      onChange={(event: ChangeEvent<HTMLInputElement>) => {
-                        setText(event.target.value);
-                      }}
-                    ></Input>
-                  </div>
-                  <div className="pt-8">
-                    <Label htmlFor="text">Data</Label>
-                    <Textarea
-                      id="text"
-                      className="h-56 whitespace-pre"
-                      onChange={(event: ChangeEvent<HTMLTextAreaElement>) => {}}
-                    ></Textarea>
-                  </div>
-                </CardContent>
-              </Card>
+              <div className="mx-auto mt-8 w-2/3">
+                <Textarea
+                  className="my-2 w-full min-w-0 flex-auto appearance-none rounded-md border border-zinc-900/10 bg-white p-1 px-3 text-gray-900 shadow-md shadow-zinc-800/5 placeholder:text-zinc-400 focus:border-violet-500 focus:outline-none focus:ring-4 focus:ring-violet-500/10 sm:text-sm"
+                  rows={20}
+                  value={
+                    sources?.find((source) => source.type === 'TEXT')?.content
+                  }
+                />
+                <p className="h-8 text-center text-sm text-gray-600">
+                  {text_chars} characters
+                </p>
+              </div>
             </TabsContent>
             <TabsContent value="sitoweb">
-              <Card>
-                <CardContent>
-                  <div className="pt-8">
-                    <Label
-                      htmlFor="crawl"
-                      className="my-2 block text-sm font-medium leading-6 text-gray-900"
-                    >
-                      Crawl
-                    </Label>
-                    <div className="flex space-x-2">
-                      <Input
-                        id="crawl"
-                        value={text}
-                        onChange={(event: ChangeEvent<HTMLInputElement>) => {
-                          setText(event.target.value);
-                        }}
-                        placeholder="https://www.example.com"
-                      ></Input>
-                      <Button variant={'plain'}>Fetch links</Button>
+              <div className="mx-auto w-2/3">
+                <Card>
+                  <CardContent>
+                    <div className="pt-8">
+                      <Label
+                        htmlFor="crawl"
+                        className="my-2 block text-sm font-medium leading-6 text-gray-900"
+                      >
+                        Crawl
+                      </Label>
+                      <div className="flex space-x-2">
+                        <Input
+                          id="crawl"
+                          onChange={(
+                            event: ChangeEvent<HTMLInputElement>,
+                          ) => {}}
+                          placeholder="https://www.example.com"
+                        ></Input>
+                        <Button variant={'plain'} loadingMessage="Crawling...">
+                          Fetch Links
+                        </Button>
+                      </div>
+                      <div className="my-2 text-sm text-rose-600"></div>
+                      <span className="py-4 text-sm text-zinc-600">
+                        This will crawl all the links starting with the URL (not
+                        including files on the website).
+                      </span>
                     </div>
-                    <span className="py-4 text-sm text-zinc-600">
-                      This will crawl all the links starting with the URL (not
-                      including files on the website).
-                    </span>
-                  </div>
-                  <div className="my-4 flex items-center">
-                    <hr className="w-full border-t border-gray-300" />
-                    <span className="whitespace-nowrap px-2 text-gray-600">
-                      OR
-                    </span>
-                    <hr className="w-full border-t border-gray-300" />
-                  </div>
-                  <div className="pt-2">
-                    <Label
-                      htmlFor="sitemap"
-                      className="my-2 block text-sm font-medium leading-6 text-gray-900"
-                    >
-                      Submit Sitemap
-                    </Label>
-                    <div className="flex space-x-2">
-                      <Input
-                        id="sitemap"
-                        value={text}
-                        onChange={(event: ChangeEvent<HTMLInputElement>) => {
-                          setText(event.target.value);
-                        }}
-                        placeholder="https://www.example.com/sitemap.xml"
-                      ></Input>
-                      <Button variant={'plain'} loadingMessage="">
-                        Load sitemap
-                      </Button>
+                    <div className="my-4 flex items-center">
+                      <hr className="w-full border-t border-gray-300" />
+                      <span className="whitespace-nowrap px-2 text-gray-600">
+                        OR
+                      </span>
+                      <hr className="w-full border-t border-gray-300" />
                     </div>
-                  </div>
-                  <div className="pt-8">
-                    <Label
-                      htmlFor="exluded_urls"
-                      className="my-2 block text-sm font-medium leading-6 text-gray-900"
-                    >
-                      Included Links
-                    </Label>
-                  </div>
-                </CardContent>
-              </Card>
+                    <div className="pt-2">
+                      <Label
+                        htmlFor="sitemap"
+                        className="my-2 block text-sm font-medium leading-6 text-gray-900"
+                      >
+                        Submit Sitemap
+                      </Label>
+                      <div className="flex space-x-2">
+                        <Input
+                          id="sitemap"
+                          onChange={(
+                            event: ChangeEvent<HTMLInputElement>,
+                          ) => {}}
+                          placeholder="https://www.example.com/sitemap.xml"
+                        ></Input>
+                        <Button variant={'plain'} loadingMessage="Fetching...">
+                          Load sitemap
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="pt-8">
+                      <Label
+                        htmlFor="exluded_urls"
+                        className="my-2 block text-sm font-medium leading-6 text-gray-900"
+                      >
+                        Included Links
+                      </Label>
+                      {sources
+                        .filter((source) => source.type === 'WEBSITE')
+                        .map((source) => (
+                          <div
+                            className="relative mt-2 rounded-md shadow-sm"
+                            key={source.source_id}
+                          >
+                            <div className="flex items-center">
+                              <Input value={source.content} disabled />
+                              <p className="ml-1 w-12 text-xs">
+                                {source.characters}
+                              </p>
+                              <button className="text-zinc-600 hover:text-zinc-900">
+                                <Trash2 className="ml-1 h-4 w-4 text-red-600" />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             </TabsContent>
           </Tabs>
         </div>
-        <div className="mt-24">
+        <div className="mx-auto my-12 w-1/2">
           <Card>
             <CardHeader>
               <CardTitle>
                 <p className="text-bold text-lg">Included Sources</p>
               </CardTitle>
-              <CardDescription>
-                <p className={cn('text-sm', { hidden: !hasFiles })}>
-                  {`${pluralize(
-                    pickedFiles?.length || 0,
-                    'file',
-                    'files',
-                  )} added`}
-                </p>
-              </CardDescription>
+              <CardDescription></CardDescription>
             </CardHeader>
             <CardContent>
               <Button
                 className="w-full"
-                variant={hasFiles ? 'glow' : 'plain'}
-                loading={loading}
-                loadingMessage="Training..."
-                onClick={handleClick}
+                loadingMessage="Traning..."
+                variant={'plain'}
               >
-                Retrain Chatbot
+                Retrain
               </Button>
             </CardContent>
           </Card>
