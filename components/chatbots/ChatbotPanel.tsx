@@ -26,12 +26,16 @@ type ChatbotPanelProps = {
   chatbotId: string;
   playing?: boolean;
   profileIcon?: string;
+  isDemoMode?: boolean;
+  initialMessages?: string;
 };
 
 const ChatbotPanel = ({
   chatbotId,
   playing,
   profileIcon,
+  isDemoMode,
+  initialMessages,
 }: ChatbotPanelProps) => {
   const [query, setQuery] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
@@ -151,13 +155,30 @@ const ChatbotPanel = ({
               </button>
             </div>
             <div ref={messageListRef}>
-              {messages.map((message) =>
-                message.type === 'AIMESSAGE' ? (
-                  <AIMessage text={message.message} />
-                ) : (
-                  <ClientMessage text={message.message} />
-                ),
-              )}
+              {!isDemoMode &&
+                messages.map((message, idx) =>
+                  message.type === 'AIMESSAGE' ? (
+                    <AIMessage
+                      text={message.message}
+                      key={`${message}-${idx}`}
+                    />
+                  ) : (
+                    <ClientMessage
+                      text={message.message}
+                      key={`${message}-${idx}`}
+                    />
+                  ),
+                )}
+              {isDemoMode &&
+                initialMessages &&
+                initialMessages
+                  .split('\n')
+                  .map(
+                    (message, idx) =>
+                      message && (
+                        <AIMessage text={message} key={`${message}-${idx}`} />
+                      ),
+                  )}
             </div>
           </div>
           <div>

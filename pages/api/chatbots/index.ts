@@ -219,7 +219,7 @@ export default async function handler(
             ip_limit,
             ip_limit_message,
             ip_limit_timeframe,
-            JSON.stringify(initial_messages),
+            initial_messages,
             JSON.stringify(chatbot.contact),
           ],
         });

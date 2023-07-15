@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-empty-function */
 import { ModelConfig } from '@/types/types';
-import { VisibilityType } from '@/types/database';
 
 export const DEFAULT_PROMPT_TEMPLATE = {
   name: 'Default',
@@ -19,7 +18,7 @@ export const DEFAULT_MODEL_CONFIG: ModelConfig = {
   sectionsMatchThreshold: 0.5,
 };
 
-export const initial_messages = ['Hi! What can I help you with?'];
+export const initial_messages = 'Hi! What can I help you with?';
 
 export const DEFAULT_RATE_LIMIT = {
   ip_limit: 20,
@@ -28,11 +27,11 @@ export const DEFAULT_RATE_LIMIT = {
 };
 
 export const DEFAULT_CONFIG_VALUES: {
-  visibility: VisibilityType;
+  visibility: string;
   ip_limit: number;
   ip_limit_message: string;
   ip_limit_timeframe: number;
-  initial_messages: any;
+  initial_messages: string;
 } = {
   visibility: 'public',
   ip_limit: DEFAULT_RATE_LIMIT.ip_limit,

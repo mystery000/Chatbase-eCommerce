@@ -12,9 +12,9 @@ create table chatbots (
   ip_limit              int(10)             not null default 20         comment 'Limit the number of messages sent from one device on the iframe and chat bubble',
   ip_limit_message      varchar(512)                                    comment 'Show this message to show when limit is hit',
   ip_limit_timeframe    int(10)             not null default 240        comment 'Limit time period',
-  initial_messages      JSON                                            comment 'Initial messages',
-  chatbot_icon          varchar(256)                                    comment 'Chatbot icon',
-  profile_icon          varchar(256)                                    comment 'Profile icon',       
+  initial_messages      text                                            comment 'Initial messages',
+  chatbot_icon          varchar(512)                                    comment 'Chatbot icon',
+  profile_icon          varchar(512)                                    comment 'Profile icon',       
   contact               JSON                not null                    comment 'Contact Information',          
   primary key (system_id)
 ) engine=innodb auto_increment=100 comment = 'Chatbot Information Form';

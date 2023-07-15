@@ -1,4 +1,4 @@
-import { useState, ChangeEvent } from 'react';
+import { useState, useCallback, ChangeEvent } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
 import { Slider } from '@/components/ui/slider';
@@ -49,7 +49,7 @@ import { toast } from 'react-hot-toast';
 import { deleteChatbot } from '@/lib/api';
 import useChatbot from '@/lib/hooks/use-chatbot';
 import useSources from '@/lib/hooks/use-sources';
-import { Contact } from '@/types/database';
+import { Chatbot, Contact } from '@/types/database';
 
 const Chatbot = () => {
   const router = useRouter();
@@ -72,6 +72,7 @@ const Chatbot = () => {
   const [shared, setShared] = useState<boolean>(false);
   const [profileIcon, setProfileIcon] = useState<string>('');
   const [chatbotIcon, setChatbotIcon] = useState<string>('');
+
   if (isLoadingChatbot || isLoadingSources) {
     return (
       <>
@@ -87,6 +88,13 @@ const Chatbot = () => {
       </>
     );
   }
+
+  const [stateChatbot, setStateChatbot] = useState<Chatbot>(() => {
+    return {
+      ...chatbot,
+      contact: JSON.parse(`${chatbot?.contact}`) as Contact,
+    };
+  });
 
   const handleDelete = async () => {
     try {
@@ -123,11 +131,14 @@ const Chatbot = () => {
   const handleChatbotIcon = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) setChatbotIcon(URL.createObjectURL(e.target.files[0]));
   };
+
+  const handleSubmit = useCallback(() => {
+    console.log(stateChatbot);
+  }, [stateChatbot]);
+
   const characters = sources.reduce((sum, source) => {
     return sum + source.characters;
   }, 0);
-
-  const contact: Contact = JSON.parse(`${chatbot?.contact}`);
 
   return (
     <>
@@ -140,7 +151,17 @@ const Chatbot = () => {
             <Tabs defaultValue="chatbot">
               <TabsList className="w-full gap-4">
                 <TabsTrigger value="chatbot">Chatbot</TabsTrigger>
-                <TabsTrigger value="settings">Settings</TabsTrigger>
+                <TabsTrigger
+                  value="settings"
+                  onClick={() =>
+                    setStateChatbot({
+                      ...chatbot,
+                      contact: JSON.parse(`${chatbot?.contact}`) as Contact,
+                    })
+                  }
+                >
+                  Settings
+                </TabsTrigger>
                 <TabsTrigger value="manage-sources">Manage Sources</TabsTrigger>
                 <TabsTrigger value="embeded-on-website" asChild>
                   <Dialog>
@@ -274,7 +295,7 @@ const Chatbot = () => {
                     <div className="pt-8">
                       <Label htmlFor="chatbotId">Chatbot ID</Label>
                       <p id="chatbotId" className="font-bold">
-                        {chatbot?.chatbot_id}
+                        {stateChatbot.chatbot_id}
                       </p>
                     </div>
                     <div className="pt-8">
@@ -287,8 +308,13 @@ const Chatbot = () => {
                       <Label htmlFor="chatbotName">Chatbot Name</Label>
                       <Input
                         id="chatbotName"
-                        value={chatbot?.name}
-                        onChange={(event: ChangeEvent<HTMLInputElement>) => {}}
+                        value={stateChatbot.name}
+                        onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                          setStateChatbot({
+                            ...stateChatbot,
+                            name: event.target.value,
+                          });
+                        }}
                       ></Input>
                     </div>
                     <div className="pt-8">
@@ -296,30 +322,51 @@ const Chatbot = () => {
                       <Textarea
                         id="basePrompt"
                         className="h-48"
-                        value={`${chatbot.promptTemplate}`}
-                        onChange={(
-                          event: ChangeEvent<HTMLTextAreaElement>,
-                        ) => {}}
+                        value={`${stateChatbot.promptTemplate}`}
+                        onChange={(event: ChangeEvent<HTMLTextAreaElement>) => {
+                          setStateChatbot({
+                            ...stateChatbot,
+                            promptTemplate: event.target.value,
+                          });
+                        }}
                       ></Textarea>
                     </div>
                     <div className="pt-8">
                       <Label htmlFor="model">Model</Label>
-                      <Input
-                        id="model"
-                        value={chatbot?.model}
-                        onChange={(event: ChangeEvent<HTMLInputElement>) => {}}
-                      ></Input>
+                      <Select
+                        defaultValue={stateChatbot.model}
+                        value={stateChatbot.model}
+                        onValueChange={(value) => {
+                          setStateChatbot({ ...stateChatbot, model: value });
+                        }}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select the LLM" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="gpt-3.5-turbo">
+                            gpt-3.5-turbo
+                          </SelectItem>
+                          <SelectItem value="gpt-4">gpt-4</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div className="pt-8">
                       <label className="block text-sm font-medium text-gray-700">
                         Temperature
                       </label>
-                      <p className="text-sm">{chatbot.temperature}</p>
+                      <p className="text-sm">{stateChatbot.temperature}</p>
                       <Slider
                         max={1}
                         step={0.1}
                         className="py-2"
-                        value={[chatbot.temperature]}
+                        value={[stateChatbot.temperature]}
+                        onValueChange={(value: number[]) => {
+                          setStateChatbot({
+                            ...stateChatbot,
+                            temperature: value[0],
+                          });
+                        }}
                       />
                       <div className="flex justify-between">
                         <p className="text-xs text-zinc-700">Reserved</p>
@@ -328,7 +375,16 @@ const Chatbot = () => {
                     </div>
                     <div className="pt-8">
                       <Label htmlFor="visibilty">Visibilty</Label>
-                      <Select defaultValue={chatbot.visibility}>
+                      <Select
+                        defaultValue={stateChatbot.visibility}
+                        value={stateChatbot.visibility}
+                        onValueChange={(value) =>
+                          setStateChatbot({
+                            ...stateChatbot,
+                            visibility: value,
+                          })
+                        }
+                      >
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder="Select the visibilty" />
                         </SelectTrigger>
@@ -363,7 +419,18 @@ const Chatbot = () => {
                     <div className="pt-8">
                       <div className="flex justify-between">
                         <Label htmlFor="rate_limit">Rate Limiting</Label>
-                        <Button variant={'secondary'} size={'sm'}>
+                        <Button
+                          variant={'secondary'}
+                          size={'sm'}
+                          onClick={(event) => {
+                            setStateChatbot({
+                              ...stateChatbot,
+                              ip_limit: chatbot.ip_limit,
+                              ip_limit_message: chatbot.ip_limit_message,
+                              ip_limit_timeframe: chatbot.ip_limit_timeframe,
+                            });
+                          }}
+                        >
                           Reset
                         </Button>
                       </div>
@@ -376,27 +443,40 @@ const Chatbot = () => {
                       <div className="mt-1 text-sm text-zinc-700">
                         Limit to only
                         <Input
-                          value={chatbot?.ip_limit}
-                          onChange={(
-                            event: ChangeEvent<HTMLInputElement>,
-                          ) => {}}
+                          type={'number'}
+                          min={1}
+                          value={stateChatbot.ip_limit}
+                          onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                            setStateChatbot({
+                              ...stateChatbot,
+                              ip_limit: Number(event.target.value),
+                            });
+                          }}
                         />
                         messages every
                         <Input
-                          value={chatbot?.ip_limit_timeframe}
-                          onChange={(
-                            event: ChangeEvent<HTMLInputElement>,
-                          ) => {}}
+                          type={'number'}
+                          min={1}
+                          value={stateChatbot.ip_limit_timeframe}
+                          onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                            setStateChatbot({
+                              ...stateChatbot,
+                              ip_limit_timeframe: Number(event.target.value),
+                            });
+                          }}
                         />
                         seconds.
                       </div>
                       <div className="my-4 text-sm text-zinc-700">
                         Show this message to show when limit is hit
                         <Input
-                          value={chatbot?.ip_limit_message}
-                          onChange={(
-                            event: ChangeEvent<HTMLInputElement>,
-                          ) => {}}
+                          value={stateChatbot.ip_limit_message}
+                          onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                            setStateChatbot({
+                              ...stateChatbot,
+                              ip_limit_message: event.target.value,
+                            });
+                          }}
                         />
                       </div>
                     </div>
@@ -406,53 +486,223 @@ const Chatbot = () => {
                         <label className="block pb-2 text-sm font-semibold">
                           Title
                         </label>
-                        <Button variant={'secondary'} size={'sm'}>
+                        <Button
+                          variant={'secondary'}
+                          size={'sm'}
+                          onClick={() =>
+                            setStateChatbot({
+                              ...stateChatbot,
+                              contact: {
+                                ...stateChatbot.contact,
+                                title: (
+                                  JSON.parse(`${chatbot.contact}`) as Contact
+                                ).title,
+                              },
+                            })
+                          }
+                        >
                           Reset
                         </Button>
                       </div>
-                      <Input className="mb-4" value={contact.title} />
+                      <Input
+                        className="mb-4"
+                        value={stateChatbot.contact.title}
+                        onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                          setStateChatbot({
+                            ...stateChatbot,
+                            contact: {
+                              ...stateChatbot.contact,
+                              title: event.target.value,
+                            },
+                          })
+                        }
+                      />
 
                       <label className="block pb-2 text-sm font-medium text-gray-700">
                         Name
                       </label>
-                      <Switch checked={contact.name.active} />
-                      {contact.name.active && (
+                      <Switch
+                        checked={stateChatbot.contact.name.active}
+                        onCheckedChange={(value) =>
+                          setStateChatbot({
+                            ...stateChatbot,
+                            contact: {
+                              ...stateChatbot.contact,
+                              name: {
+                                ...stateChatbot.contact.name,
+                                active: value,
+                              },
+                            },
+                          })
+                        }
+                      />
+                      {stateChatbot.contact.name.active && (
                         <>
                           <div className="my-1 flex justify-end">
-                            <Button variant={'secondary'} size={'sm'}>
+                            <Button
+                              variant={'secondary'}
+                              size={'sm'}
+                              onClick={() =>
+                                setStateChatbot({
+                                  ...stateChatbot,
+                                  contact: {
+                                    ...stateChatbot.contact,
+                                    name: {
+                                      ...stateChatbot.contact.name,
+                                      label: (
+                                        JSON.parse(
+                                          `${chatbot.contact}`,
+                                        ) as Contact
+                                      ).name.label,
+                                    },
+                                  },
+                                })
+                              }
+                            >
                               Reset
                             </Button>
                           </div>
-                          <Input className="mb-4" value={contact.name.label} />
+                          <Input
+                            className="mb-4"
+                            value={stateChatbot.contact.name.label}
+                            onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                              setStateChatbot({
+                                ...stateChatbot,
+                                contact: {
+                                  ...stateChatbot.contact,
+                                  name: {
+                                    ...stateChatbot.contact.name,
+                                    label: event.target.value,
+                                  },
+                                },
+                              })
+                            }
+                          />
                         </>
                       )}
 
                       <label className="block pb-2 text-sm font-medium text-gray-700">
                         Email
                       </label>
-                      <Switch checked={contact.email.active} />
-                      {contact.email.active && (
+                      <Switch
+                        checked={stateChatbot.contact.email.active}
+                        onCheckedChange={(value) =>
+                          setStateChatbot({
+                            ...stateChatbot,
+                            contact: {
+                              ...stateChatbot.contact,
+                              email: {
+                                ...stateChatbot.contact.email,
+                                active: value,
+                              },
+                            },
+                          })
+                        }
+                      />
+                      {stateChatbot.contact.email.active && (
                         <>
                           <div className="my-1 flex justify-end">
-                            <Button variant={'secondary'} size={'sm'}>
+                            <Button
+                              variant={'secondary'}
+                              size={'sm'}
+                              onClick={() =>
+                                setStateChatbot({
+                                  ...stateChatbot,
+                                  contact: {
+                                    ...stateChatbot.contact,
+                                    email: {
+                                      ...stateChatbot.contact.email,
+                                      label: (
+                                        JSON.parse(
+                                          `${chatbot.contact}`,
+                                        ) as Contact
+                                      ).email.label,
+                                    },
+                                  },
+                                })
+                              }
+                            >
                               Reset
                             </Button>
                           </div>
-                          <Input className="mb-4" value={contact.email.label} />
+                          <Input
+                            className="mb-4"
+                            value={stateChatbot.contact.email.label}
+                            onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                              setStateChatbot({
+                                ...stateChatbot,
+                                contact: {
+                                  ...stateChatbot.contact,
+                                  email: {
+                                    ...stateChatbot.contact.email,
+                                    label: event.target.value,
+                                  },
+                                },
+                              })
+                            }
+                          />
                         </>
                       )}
                       <label className="block pb-2 text-sm font-medium text-gray-700">
                         Phone Number
                       </label>
-                      <Switch checked={contact.phone.active} />
-                      {contact.phone.active && (
+                      <Switch
+                        checked={stateChatbot.contact.phone.active}
+                        onCheckedChange={(value) =>
+                          setStateChatbot({
+                            ...stateChatbot,
+                            contact: {
+                              ...stateChatbot.contact,
+                              phone: {
+                                ...stateChatbot.contact.phone,
+                                active: value,
+                              },
+                            },
+                          })
+                        }
+                      />
+                      {stateChatbot.contact.phone.active && (
                         <>
                           <div className="my-1 flex justify-end">
-                            <Button variant={'secondary'} size={'sm'}>
+                            <Button
+                              variant={'secondary'}
+                              size={'sm'}
+                              onClick={() =>
+                                setStateChatbot({
+                                  ...stateChatbot,
+                                  contact: {
+                                    ...stateChatbot.contact,
+                                    phone: {
+                                      ...stateChatbot.contact.phone,
+                                      label: (
+                                        JSON.parse(
+                                          `${chatbot.contact}`,
+                                        ) as Contact
+                                      ).phone.label,
+                                    },
+                                  },
+                                })
+                              }
+                            >
                               Reset
                             </Button>
                           </div>
-                          <Input className="mb-4" value={contact.phone.label} />
+                          <Input
+                            className="mb-4"
+                            value={stateChatbot.contact.phone.label}
+                            onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                              setStateChatbot({
+                                ...stateChatbot,
+                                contact: {
+                                  ...stateChatbot.contact,
+                                  phone: {
+                                    ...stateChatbot.contact.phone,
+                                    label: event.target.value,
+                                  },
+                                },
+                              })
+                            }
+                          />
                         </>
                       )}
                     </div>
@@ -470,18 +720,30 @@ const Chatbot = () => {
                               <label className="block text-sm font-medium text-gray-700">
                                 Initial Messages
                               </label>
-                              <Button variant={'secondary'} size={'sm'}>
+                              <Button
+                                variant={'secondary'}
+                                size={'sm'}
+                                onClick={() =>
+                                  setStateChatbot({
+                                    ...stateChatbot,
+                                    initial_messages: chatbot.initial_messages,
+                                  })
+                                }
+                              >
                                 Reset
                               </Button>
                             </div>
                             <div className="mt-1">
                               <Textarea
-                                value={JSON.parse(
-                                  `${chatbot.initial_messages}`,
-                                )}
+                                value={stateChatbot.initial_messages}
                                 onChange={(
                                   event: ChangeEvent<HTMLTextAreaElement>,
-                                ) => {}}
+                                ) => {
+                                  setStateChatbot({
+                                    ...stateChatbot,
+                                    initial_messages: event.target.value,
+                                  });
+                                }}
                               ></Textarea>
                               <p className="mt-2 text-sm text-zinc-500">
                                 Enter each message in a new line.
@@ -520,14 +782,16 @@ const Chatbot = () => {
                               <Card>
                                 <CardContent className="p-0">
                                   <img
-                                    src={chatbotIcon || chatbot.chatbot_icon}
+                                    src={
+                                      chatbotIcon || stateChatbot.chatbot_icon
+                                    }
                                     className="mx-auto h-40 w-40 rounded-t-sm border-none object-cover"
                                     loading="lazy"
                                   />
                                 </CardContent>
                                 <CardFooter className="select-none p-2">
                                   <p className="w-8 grow truncate text-center">
-                                    {chatbot.name}
+                                    {stateChatbot.name}
                                   </p>
                                 </CardFooter>
                               </Card>
@@ -537,13 +801,19 @@ const Chatbot = () => {
                         <div className="w-1/2 flex-1">
                           <ChatbotPanel
                             chatbotId={chatbot.chatbot_id}
-                            profileIcon={profileIcon || chatbot.profile_icon}
+                            profileIcon={
+                              profileIcon || stateChatbot.profile_icon
+                            }
+                            isDemoMode={true}
+                            initialMessages={stateChatbot.initial_messages}
                           />
                         </div>
                       </div>
                     </div>
                     <div className="mt-2 flex justify-end">
-                      <Button className="w-full">Save Changes</Button>
+                      <Button className="w-full" onClick={handleSubmit}>
+                        Save Changes
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
