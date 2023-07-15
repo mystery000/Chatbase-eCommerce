@@ -65,14 +65,6 @@ const Chatbot = () => {
     mutate: mutateSources,
   } = useSources();
 
-  const [openDeleteDialog, setOpenDeleteDialog] = useState<boolean>(false);
-  const [openShareDialog, setOpenShareDialog] = useState<boolean>(false);
-  const [requireLogin, setRequireLogin] = useState<boolean>(false);
-  const [sharing, setSharing] = useState<boolean>(false);
-  const [shared, setShared] = useState<boolean>(false);
-  const [profileIcon, setProfileIcon] = useState<string>('');
-  const [chatbotIcon, setChatbotIcon] = useState<string>('');
-
   if (isLoadingChatbot || isLoadingSources) {
     return (
       <>
@@ -89,11 +81,17 @@ const Chatbot = () => {
     );
   }
 
-  const [stateChatbot, setStateChatbot] = useState<Chatbot>(() => {
-    return {
-      ...chatbot,
-      contact: JSON.parse(`${chatbot?.contact}`) as Contact,
-    };
+  const [openDeleteDialog, setOpenDeleteDialog] = useState<boolean>(false);
+  const [openShareDialog, setOpenShareDialog] = useState<boolean>(false);
+  const [requireLogin, setRequireLogin] = useState<boolean>(false);
+  const [sharing, setSharing] = useState<boolean>(false);
+  const [shared, setShared] = useState<boolean>(false);
+  const [profileIcon, setProfileIcon] = useState<string>('');
+  const [chatbotIcon, setChatbotIcon] = useState<string>('');
+
+  const [stateChatbot, setStateChatbot] = useState<Chatbot>({
+    ...chatbot,
+    contact: JSON.parse(`${chatbot?.contact}`) as Contact,
   });
 
   const handleDelete = async () => {

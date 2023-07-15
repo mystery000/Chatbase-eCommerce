@@ -85,7 +85,7 @@ export default function AppLayout({ children }: LayoutProps) {
                     alt="profile picture"
                     width={36}
                     height={36}
-                    src="https://backend.chatbase.co/storage/v1/object/public/chatbots-profile-pictures/41291895-cdbe-487c-b1a3-fb65ce5ebde6/2WRGxVZYEi6cE-K1XcIQj.jfif?width=48&quality=100 1x, https://backend.chatbase.co/storage/v1/object/public/chatbots-profile-pictures/41291895-cdbe-487c-b1a3-fb65ce5ebde6/2WRGxVZYEi6cE-K1XcIQj.jfif?width=96&quality=100 2x"
+                    src="/static/profile_default_icon.jfif"
                   />
                 </a>
               </div>
