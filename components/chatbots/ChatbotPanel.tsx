@@ -26,7 +26,6 @@ type ChatbotPanelProps = {
   chatbotId: string;
   playing?: boolean;
   profileIcon?: string;
-  isDemoMode?: boolean;
   initialMessages?: string;
 };
 
@@ -34,7 +33,6 @@ const ChatbotPanel = ({
   chatbotId,
   playing,
   profileIcon,
-  isDemoMode,
   initialMessages,
 }: ChatbotPanelProps) => {
   const [query, setQuery] = useState<string>('');
@@ -43,9 +41,19 @@ const ChatbotPanel = ({
 
   const [messageState, setMessageState] = useState<{
     messages: Message[];
-  }>({
-    messages: [{ message: 'Hi! What can I do for you?', type: 'AIMESSAGE' }],
-  });
+  }>({ messages: [] });
+
+  useEffect(() => {
+    setMessageState({
+      messages: initialMessages
+        ? initialMessages
+            .replace(/\\n/g, '\n')
+            .split('\n')
+            .filter((message) => message.length > 0)
+            .map((message) => ({ message, type: 'AIMESSAGE' }))
+        : [],
+    });
+  }, [initialMessages]);
 
   const { messages } = messageState;
 
@@ -155,30 +163,16 @@ const ChatbotPanel = ({
               </button>
             </div>
             <div ref={messageListRef}>
-              {!isDemoMode &&
-                messages.map((message, idx) =>
-                  message.type === 'AIMESSAGE' ? (
-                    <AIMessage
-                      text={message.message}
-                      key={`${message}-${idx}`}
-                    />
-                  ) : (
-                    <ClientMessage
-                      text={message.message}
-                      key={`${message}-${idx}`}
-                    />
-                  ),
-                )}
-              {isDemoMode &&
-                initialMessages &&
-                initialMessages
-                  .split('\n')
-                  .map(
-                    (message, idx) =>
-                      message && (
-                        <AIMessage text={message} key={`${message}-${idx}`} />
-                      ),
-                  )}
+              {messages.map((message, idx) =>
+                message.type === 'AIMESSAGE' ? (
+                  <AIMessage text={message.message} key={`${message}-${idx}`} />
+                ) : (
+                  <ClientMessage
+                    text={message.message}
+                    key={`${message}-${idx}`}
+                  />
+                ),
+              )}
             </div>
           </div>
           <div>

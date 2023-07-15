@@ -285,6 +285,7 @@ const Chatbot = () => {
                   chatbotId={chatbot.chatbot_id}
                   playing={true}
                   profileIcon={chatbot.profile_icon}
+                  initialMessages={chatbot.initial_messages}
                 />
               </TabsContent>
               <TabsContent value="settings">
@@ -733,7 +734,10 @@ const Chatbot = () => {
                             </div>
                             <div className="mt-1">
                               <Textarea
-                                value={stateChatbot.initial_messages}
+                                value={stateChatbot.initial_messages?.replace(
+                                  /\\n/g,
+                                  '\n',
+                                )}
                                 onChange={(
                                   event: ChangeEvent<HTMLTextAreaElement>,
                                 ) => {
@@ -802,7 +806,6 @@ const Chatbot = () => {
                             profileIcon={
                               profileIcon || stateChatbot.profile_icon
                             }
-                            isDemoMode={true}
                             initialMessages={stateChatbot.initial_messages}
                           />
                         </div>
