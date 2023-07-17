@@ -1,5 +1,8 @@
 import dynamic from 'next/dynamic';
-const AppLayout = dynamic(() => import('@/components/layouts/AppLayout'));
+const PacmanLoader = dynamic(() => import('@/components/loaders/PacmanLoader'));
+const AppLayout = dynamic(() => import('@/components/layouts/AppLayout'), {
+  loading: () => <PacmanLoader />,
+});
 
 export default function Guide() {
   return (

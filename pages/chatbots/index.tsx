@@ -2,8 +2,10 @@ import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
 
-const AppLayout = dynamic(() => import('@/components/layouts/AppLayout'));
 const PacmanLoader = dynamic(() => import('@/components/loaders/PacmanLoader'));
+const AppLayout = dynamic(() => import('@/components/layouts/AppLayout'), {
+  loading: () => <PacmanLoader />,
+});
 const ChatbotCard = dynamic(() => import('@/components/chatbots/ChatbotCard'), {
   loading: () => <PacmanLoader />,
 });

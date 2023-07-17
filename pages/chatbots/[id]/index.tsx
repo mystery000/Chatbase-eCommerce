@@ -4,8 +4,10 @@ import { useRouter } from 'next/router';
 import { Slider } from '@/components/ui/slider';
 import { Checkbox } from '@/components/ui/checkbox';
 
-const AppLayout = dynamic(() => import('@/components/layouts/AppLayout'));
 const PacmanLoader = dynamic(() => import('@/components/loaders/PacmanLoader'));
+const AppLayout = dynamic(() => import('@/components/layouts/AppLayout'), {
+  loading: () => <PacmanLoader />,
+});
 const ChatbotPanel = dynamic(
   () => import('@/components/chatbots/ChatbotPanel'),
   {

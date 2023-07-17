@@ -23,8 +23,11 @@ import useChatbots from '@/lib/hooks/use-chatbots';
 import { Textarea } from '@/components/ui/textarea';
 const Button = dynamic(() => import('@/components/ui/buttoneEx'));
 import { crwalWebsiteContentSize } from '@/lib/integrations/website';
-const AppLayout = dynamic(() => import('@/components/layouts/AppLayout'));
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+const PacmanLoader = dynamic(() => import('@/components/loaders/PacmanLoader'));
+const AppLayout = dynamic(() => import('@/components/layouts/AppLayout'), {
+  loading: () => <PacmanLoader />,
+});
 
 const CreateChatbot: FC = () => {
   const MAX_FILES = 5;
