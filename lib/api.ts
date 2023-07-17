@@ -27,3 +27,15 @@ export const deleteChatbot = async (chatbotId: string) => {
   });
   return getResponseOrThrow<any>(res);
 };
+
+export const chatCompletion = async (chatbotId: string, question: string) => {
+  const res = await fetch(`/api/chatbots/${chatbotId}/chat`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      accept: 'application/json',
+    },
+    body: JSON.stringify({ question }),
+  });
+  return getResponseOrThrow<any>(res);
+};

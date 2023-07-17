@@ -4,7 +4,7 @@ import { PineconeStore } from 'langchain/vectorstores/pinecone';
 import { makeChain } from '@/lib/pinecone/makechain';
 import { pinecone } from '@/lib/pinecone/pinecone-client';
 import { PINECONE_INDEX_NAME } from '@/config/pinecone';
-import { BAD_METHOD, ERROR } from '@/config/HttpStatus';
+import { BAD_METHOD, BAD_REQUEST, ERROR } from '@/config/HttpStatus';
 import rateLimiterMiddleware from '@/lib/middleware/rate-limit';
 import excuteQuery from '@/lib/mysql';
 import { Chatbot } from '@/types/database';
@@ -18,8 +18,7 @@ export default async function handler(
 
   //only accept post requests
   if (req.method !== 'POST') {
-    res.status(BAD_METHOD).json({ error: 'Method not allowed' });
-    return;
+    return res.status(BAD_METHOD).json({ error: 'Method not allowed' });
   }
 
   if (!question) {
@@ -35,7 +34,9 @@ export default async function handler(
   const chatbot: Chatbot = data[0];
 
   const ip = req.headers['x-real-ip'] || req.connection.remoteAddress;
-  if (Array.isArray(ip) || !ip) return;
+
+  if (Array.isArray(ip) || !ip)
+    return res.status(BAD_REQUEST).json({ error: 'unknown device' });
 
   if (
     !rateLimiterMiddleware({
@@ -44,7 +45,7 @@ export default async function handler(
       windowMs: chatbot.ip_limit_timeframe * 1000,
     })
   ) {
-    return res.status(429).json({ message: chatbot.ip_limit_message });
+    return res.status(429).json({ error: chatbot.ip_limit_message });
   }
 
   // OpenAI recommends replacing newlines with spaces for best results
@@ -68,9 +69,11 @@ export default async function handler(
     const response = await chain.call({
       question: sanitizedQuestion,
     });
-    res.status(200).json(response);
+    return res.status(200).json(response);
   } catch (error: any) {
     console.log('error', error);
-    res.status(ERROR).json({ error: error.message || 'Something went wrong' });
+    return res
+      .status(ERROR)
+      .json({ error: error.message || 'Something went wrong' });
   }
 }

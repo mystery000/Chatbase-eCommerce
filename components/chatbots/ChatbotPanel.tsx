@@ -16,11 +16,13 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { SendIcon } from '../icons/Send';
-import AIMessage from '../message/AIMessage';
-import ClientMessage from '../message/ClientMessage';
 import { Message } from '@/types/types';
 import { toast } from 'react-hot-toast';
 import { useRouter } from 'next/router';
+import dynamic from 'next/dynamic';
+import { chatCompletion } from '@/lib/api';
+const AIMessage = dynamic(() => import('../message/AIMessage'));
+const ClientMessage = dynamic(() => import('../message/ClientMessage'));
 
 type ChatbotPanelProps = {
   chatbotId: string;
@@ -37,7 +39,7 @@ const ChatbotPanel = ({
 }: ChatbotPanelProps) => {
   const [query, setQuery] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string>('');
 
   const [messageState, setMessageState] = useState<{
     messages: Message[];
@@ -71,7 +73,7 @@ const ChatbotPanel = ({
 
       if (!playing) return;
 
-      setError(null);
+      setError('');
       if (!query) {
         toast.error('Please input a question');
         return;
@@ -91,42 +93,33 @@ const ChatbotPanel = ({
       setQuery('');
 
       try {
-        const response = await fetch(`/api/chatbots/${chatbotId}/chat`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ question }),
-        });
-        const data = await response.json();
-        if (data.error) {
-          setError(data.error);
-        } else {
-          setMessageState((state) => ({
-            ...state,
-            messages: [
-              ...state.messages,
-              {
-                type: 'AIMESSAGE',
-                message: data.text,
-              },
-            ],
-          }));
-        }
+        const response = await chatCompletion(chatbotId, question);
+        setMessageState((state) => ({
+          ...state,
+          messages: [
+            ...state.messages,
+            {
+              type: 'AIMESSAGE',
+              message: response.text,
+            },
+          ],
+        }));
+
         setLoading(false);
         //scroll to bottom
         messageListRef.current?.scrollTo(
           0,
           messageListRef.current.scrollHeight,
         );
-      } catch (error) {
+      } catch (err) {
+        const error: Error = err as Error;
         setLoading(false);
-        setError('Failed to chat with AI. Please try again.');
-        toast.error('Failed to chat with AI. Please try again.');
-        console.log('error', error);
+        setError(error.message);
+        toast.error(error.message);
+        console.error(err);
       }
     },
-    [query, chatbotId, playing],
+    [query, chatbotId, playing, messageListRef],
   );
 
   //prevent empty submissions
@@ -155,6 +148,7 @@ const ChatbotPanel = ({
                   width={36}
                   height={36}
                   src={profileIcon}
+                  loading={'lazy'}
                 />
                 <h1 className="text-lg font-bold text-zinc-700">Mohamed</h1>
               </div>

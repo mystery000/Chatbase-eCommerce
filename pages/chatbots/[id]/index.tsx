@@ -1,4 +1,4 @@
-import { useState, useCallback, ChangeEvent } from 'react';
+import { useState, useCallback, ChangeEvent, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
 import { Slider } from '@/components/ui/slider';
@@ -52,7 +52,17 @@ import useSources from '@/lib/hooks/use-sources';
 import { Chatbot, Contact } from '@/types/database';
 
 const Chatbot = () => {
+  const [openDeleteDialog, setOpenDeleteDialog] = useState<boolean>(false);
+  const [openShareDialog, setOpenShareDialog] = useState<boolean>(false);
+  const [requireLogin, setRequireLogin] = useState<boolean>(false);
+  const [sharing, setSharing] = useState<boolean>(false);
+  const [shared, setShared] = useState<boolean>(false);
+  const [profileIcon, setProfileIcon] = useState<string>('');
+  const [chatbotIcon, setChatbotIcon] = useState<string>('');
+  const [stateChatbot, setStateChatbot] = useState<Chatbot | null>(null);
+
   const router = useRouter();
+
   const {
     chatbot,
     isLoading: isLoadingChatbot,
@@ -64,6 +74,14 @@ const Chatbot = () => {
     isLoading: isLoadingSources,
     mutate: mutateSources,
   } = useSources();
+
+  useEffect(() => {
+    if (!chatbot) return;
+    setStateChatbot({
+      ...chatbot,
+      contact: JSON.parse(`${chatbot?.contact}`) as Contact,
+    });
+  }, [chatbot]);
 
   if (isLoadingChatbot || isLoadingSources) {
     return (
@@ -81,18 +99,13 @@ const Chatbot = () => {
     );
   }
 
-  const [openDeleteDialog, setOpenDeleteDialog] = useState<boolean>(false);
-  const [openShareDialog, setOpenShareDialog] = useState<boolean>(false);
-  const [requireLogin, setRequireLogin] = useState<boolean>(false);
-  const [sharing, setSharing] = useState<boolean>(false);
-  const [shared, setShared] = useState<boolean>(false);
-  const [profileIcon, setProfileIcon] = useState<string>('');
-  const [chatbotIcon, setChatbotIcon] = useState<string>('');
-
-  const [stateChatbot, setStateChatbot] = useState<Chatbot>({
-    ...chatbot,
-    contact: JSON.parse(`${chatbot?.contact}`) as Contact,
-  });
+  if (!stateChatbot) {
+    return (
+      <>
+        <div className="text-gree/50 text-center">initializing...</div>
+      </>
+    );
+  }
 
   const handleDelete = async () => {
     try {
@@ -130,9 +143,7 @@ const Chatbot = () => {
     if (e.target.files) setChatbotIcon(URL.createObjectURL(e.target.files[0]));
   };
 
-  const handleSubmit = useCallback(() => {
-    console.log(stateChatbot);
-  }, [stateChatbot]);
+  const handleSubmit = () => {};
 
   const characters = sources.reduce((sum, source) => {
     return sum + source.characters;
