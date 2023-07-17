@@ -2,8 +2,6 @@ import * as fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
 import excuteQuery from '@/lib/mysql';
 import { Chatbot } from '@/types/database';
-import { parseForm } from '@/lib/parse-form';
-import { Document } from 'langchain/document';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { PINECONE_INDEX_NAME } from '@/config/pinecone';
 import { pinecone } from '@/lib/pinecone/pinecone-client';
@@ -22,12 +20,24 @@ import {
   DEFAULT_MODEL_CONFIG,
   DEFAULT_CONFIG_VALUES,
   DEFAULT_CONTACT_INFO,
+  DEFAULT_ICONS_PATH,
 } from '@/config/chabot';
-import { url } from 'inspector';
+
+// formidable
+import mime from 'mime';
+import { join } from 'path';
+import { IncomingForm } from 'formidable';
+import { parseForm } from '@/lib/parse-form';
 
 type Data = { status?: string; error?: string } | Chatbot[] | Chatbot;
 
-const allowMethods = ['GET', 'POST'];
+const allowMethods = ['GET', 'POST', 'PATCH'];
+
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
 
 export default async function handler(
   req: NextApiRequest,
@@ -41,7 +51,6 @@ export default async function handler(
   }
 
   // Unauthorized
-
   if (req.method === 'GET') {
     try {
       const chatbots = await excuteQuery({
@@ -205,9 +214,11 @@ export default async function handler(
           contact: DEFAULT_CONTACT_INFO,
         };
 
+        const { chatbotIcon, profileIcon } = DEFAULT_ICONS_PATH;
+
         await excuteQuery({
           query:
-            'INSERT INTO chatbots (chatbot_id, name, created_at, promptTemplate, model, temperature, visibility, ip_limit, ip_limit_message, ip_limit_timeframe, initial_messages, contact) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',
+            'INSERT INTO chatbots (chatbot_id, name, created_at, promptTemplate, model, temperature, visibility, ip_limit, ip_limit_message, ip_limit_timeframe, initial_messages, contact, chatbot_icon, profile_icon) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
           values: [
             chatbot_id,
             name,
@@ -221,6 +232,8 @@ export default async function handler(
             ip_limit_timeframe,
             initial_messages,
             JSON.stringify(chatbot.contact),
+            chatbotIcon,
+            profileIcon,
           ],
         });
 
@@ -241,13 +254,59 @@ export default async function handler(
         .status(ERROR)
         .json({ error: `Failed to create the chatbot due to ${error}` });
     }
+  } else if (req.method === 'PATCH') {
+    const identifier = uuidv4();
+    const prefix = 'images';
+    const avatars: { chatbot?: string | null; profile?: string | null } = {};
+    const form = new IncomingForm({
+      uploadDir: join(process.env.ROOT_DIR || process.cwd(), `/public/images`),
+      filename: (_name, _ext, part) => {
+        const filename = `${identifier}-${_name}.${
+          mime.getExtension(part.mimetype || '') || 'unknown'
+        }`;
+        if (!part.mimetype?.startsWith('image')) return filename;
+        if (part.name === 'avatar_chatbot') {
+          avatars.chatbot = `${prefix}/${filename}`;
+        } else {
+          avatars.profile = `${prefix}/${filename}`;
+        }
+        return filename;
+      },
+      filter: (part) => part.mimetype?.startsWith('image/') || false,
+    });
+    form.parse(req, async (err, fields, files) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).json({ error: 'Internal Server Error' });
+      }
+      const chatbot: Chatbot = JSON.parse(fields.chatbot[0]) as Chatbot;
+      try {
+        await excuteQuery({
+          query: 'UPDATE chatbots SET ? WHERE chatbot_id=(?)',
+          values: [
+            {
+              name: chatbot.name,
+              promptTemplate: chatbot.promptTemplate,
+              model: chatbot.model,
+              temperature: chatbot.temperature,
+              visibility: chatbot.visibility,
+              ip_limit: chatbot.ip_limit,
+              ip_limit_message: chatbot.ip_limit_message,
+              ip_limit_timeframe: chatbot.ip_limit_timeframe,
+              initial_messages: chatbot.initial_messages,
+              chatbot_icon: avatars.chatbot || chatbot.chatbot_icon,
+              profile_icon: avatars.profile || chatbot.profile_icon,
+              contact: JSON.stringify(chatbot.contact),
+            },
+            chatbot.chatbot_id,
+          ],
+        });
+      } catch (error) {
+        console.log(error);
+        return res.status(500).json({ error: 'Internal Server Error' });
+      }
+    });
+    return res.status(SUCCESS).json({ status: 'ok' });
   }
-
   return res.status(SUCCESS).json({ status: 'ok' });
 }
-
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};

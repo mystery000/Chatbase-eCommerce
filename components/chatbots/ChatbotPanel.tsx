@@ -37,6 +37,7 @@ const ChatbotPanel = ({
   profileIcon,
   initialMessages,
 }: ChatbotPanelProps) => {
+  const router = useRouter();
   const [query, setQuery] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');

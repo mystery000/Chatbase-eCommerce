@@ -46,7 +46,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'react-hot-toast';
-import { deleteChatbot } from '@/lib/api';
+import { deleteChatbot, updateChatbotSettings } from '@/lib/api';
 import useChatbot from '@/lib/hooks/use-chatbot';
 import useSources from '@/lib/hooks/use-sources';
 import { Chatbot, Contact } from '@/types/database';
@@ -59,6 +59,7 @@ const Chatbot = () => {
   const [shared, setShared] = useState<boolean>(false);
   const [profileIcon, setProfileIcon] = useState<string>('');
   const [chatbotIcon, setChatbotIcon] = useState<string>('');
+  const [avatars, setAvatars] = useState<{ profile?: File; chatbot?: File }>();
   const [stateChatbot, setStateChatbot] = useState<Chatbot | null>(null);
 
   const router = useRouter();
@@ -81,6 +82,17 @@ const Chatbot = () => {
       ...chatbot,
       contact: JSON.parse(`${chatbot?.contact}`) as Contact,
     });
+  }, [chatbot]);
+
+  const handleResetSettings = useCallback(() => {
+    if (!chatbot) return;
+    setStateChatbot({
+      ...chatbot,
+      contact: JSON.parse(`${chatbot?.contact}`) as Contact,
+    });
+    setAvatars(undefined);
+    setProfileIcon('');
+    setChatbotIcon('');
   }, [chatbot]);
 
   if (isLoadingChatbot || isLoadingSources) {
@@ -136,14 +148,29 @@ const Chatbot = () => {
   };
 
   const handleProfileIcon = (e: ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) setProfileIcon(URL.createObjectURL(e.target.files[0]));
+    if (e.target.files) {
+      setProfileIcon(URL.createObjectURL(e.target.files[0]));
+      setAvatars({ ...avatars, profile: e.target.files[0] });
+    }
   };
 
   const handleChatbotIcon = (e: ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) setChatbotIcon(URL.createObjectURL(e.target.files[0]));
+    if (e.target.files) {
+      setChatbotIcon(URL.createObjectURL(e.target.files[0]));
+      setAvatars({ ...avatars, chatbot: e.target.files[0] });
+    }
   };
 
-  const handleSubmit = () => {};
+  const handleSubmit = async () => {
+    if (!stateChatbot) return;
+    try {
+      await updateChatbotSettings(stateChatbot, avatars);
+      mutateChatbot();
+      toast.success('Saved');
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   const characters = sources.reduce((sum, source) => {
     return sum + source.characters;
@@ -157,18 +184,10 @@ const Chatbot = () => {
             {chatbot?.name}
           </div>
           <div>
-            <Tabs defaultValue="chatbot">
+            <Tabs defaultValue="settings">
               <TabsList className="w-full gap-4">
                 <TabsTrigger value="chatbot">Chatbot</TabsTrigger>
-                <TabsTrigger
-                  value="settings"
-                  onClick={() =>
-                    setStateChatbot({
-                      ...chatbot,
-                      contact: JSON.parse(`${chatbot?.contact}`) as Contact,
-                    })
-                  }
-                >
+                <TabsTrigger value="settings" onClick={handleResetSettings}>
                   Settings
                 </TabsTrigger>
                 <TabsTrigger value="manage-sources">Manage Sources</TabsTrigger>
@@ -295,7 +314,7 @@ const Chatbot = () => {
                 <ChatbotPanel
                   chatbotId={chatbot.chatbot_id}
                   playing={true}
-                  profileIcon={chatbot.profile_icon}
+                  profileIcon={`${router.basePath}/${stateChatbot.profile_icon}`}
                   initialMessages={chatbot.initial_messages}
                 />
               </TabsContent>
@@ -769,7 +788,7 @@ const Chatbot = () => {
                             </label>
                             <Input
                               type="file"
-                              accept="image/*"
+                              accept=".png, .jpeg, .jpg"
                               onChange={handleProfileIcon}
                             />
                           </div>
@@ -785,7 +804,7 @@ const Chatbot = () => {
                             </label>
                             <Input
                               type="file"
-                              accept="image/*"
+                              accept=".png, .jpeg, .jpg"
                               onChange={handleChatbotIcon}
                             />
                             <div className="mx-auto w-fit">
@@ -796,7 +815,8 @@ const Chatbot = () => {
                                 <CardContent className="p-0">
                                   <img
                                     src={
-                                      chatbotIcon || stateChatbot.chatbot_icon
+                                      chatbotIcon ||
+                                      `${router.basePath}/${stateChatbot.chatbot_icon}`
                                     }
                                     className="mx-auto h-40 w-40 rounded-t-sm border-none object-cover"
                                     loading="lazy"
@@ -815,7 +835,8 @@ const Chatbot = () => {
                           <ChatbotPanel
                             chatbotId={chatbot.chatbot_id}
                             profileIcon={
-                              profileIcon || stateChatbot.profile_icon
+                              profileIcon ||
+                              `${router.basePath}/${stateChatbot.profile_icon}`
                             }
                             initialMessages={stateChatbot.initial_messages}
                           />

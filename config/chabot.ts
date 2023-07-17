@@ -46,3 +46,8 @@ export const DEFAULT_CONTACT_INFO = {
   email: { active: false, label: 'Email' },
   phone: { active: false, label: 'Phone Number' },
 };
+
+export const DEFAULT_ICONS_PATH = {
+  chatbotIcon: 'static/chatbot_default_icon.png',
+  profileIcon: 'static/profile_default_icon.jpeg',
+};

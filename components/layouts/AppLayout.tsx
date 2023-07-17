@@ -85,7 +85,7 @@ export default function AppLayout({ children }: LayoutProps) {
                     alt="profile picture"
                     width={36}
                     height={36}
-                    src="/static/profile_default_icon.jfif"
+                    src="/static/profile_default_icon.jpeg"
                   />
                 </a>
               </div>

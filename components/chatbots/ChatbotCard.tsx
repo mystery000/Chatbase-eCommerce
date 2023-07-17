@@ -19,7 +19,6 @@ type ChatbotProps = {
 const ChatbotCard: FC<ChatbotProps> = ({ chatbot }) => {
   const router = useRouter();
   const baseURL = router.pathname;
-
   return (
     <Link href={`${baseURL}/${chatbot.chatbot_id}`}>
       <Card>

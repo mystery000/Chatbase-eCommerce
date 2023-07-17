@@ -10,11 +10,10 @@ export const parseForm = async (
 ): Promise<{
   fields: formidable.Fields;
   files: formidable.Files;
-  chatbot_id: string;
+  chatbot_id?: string;
 }> => {
   return new Promise(async (resolve, reject) => {
     const chatbot_id = uuidv4();
-
     const uploadDir = join(
       process.env.ROOT_DIR || process.cwd(),
       `/public/sources/${chatbot_id}`,

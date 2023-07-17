@@ -1,6 +1,9 @@
 import { Chatbot } from '@/types/database';
 import { getResponseOrThrow } from './utils';
-import { url } from 'inspector';
+
+interface SwissFile extends File {
+  type: string;
+}
 
 export const createChatbot = async (
   name: string,
@@ -37,5 +40,22 @@ export const chatCompletion = async (chatbotId: string, question: string) => {
     },
     body: JSON.stringify({ question }),
   });
+  return getResponseOrThrow<any>(res);
+};
+
+export const updateChatbotSettings = async (
+  chatbot: Chatbot,
+  avatars?: { profile?: File; chatbot?: File },
+) => {
+  const payload = new FormData();
+  payload.append('chatbot', JSON.stringify(chatbot));
+  avatars?.chatbot && payload.append('avatar_chatbot', avatars.chatbot);
+  avatars?.profile && payload.append('avatar_profile', avatars.profile);
+
+  const res = await fetch(`/api/chatbots`, {
+    method: 'PATCH',
+    body: payload,
+  });
+
   return getResponseOrThrow<any>(res);
 };
