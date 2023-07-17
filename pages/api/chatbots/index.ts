@@ -298,6 +298,7 @@ export default async function handler(
               initial_messages: chatbot.initial_messages,
               chatbot_icon: avatars.chatbot || chatbot.chatbot_icon,
               profile_icon: avatars.profile || chatbot.profile_icon,
+              active_profile_icon: chatbot.active_profile_icon,
               contact: JSON.stringify(chatbot.contact),
             },
             chatbot.chatbot_id,

@@ -22,7 +22,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import useSources from '@/lib/hooks/use-sources';
 
 const RetrainChatbot: FC = () => {
-  const { sources, mutate, isLoading } = useSources();
+  const { sources, mutate: mutateSources } = useSources();
   const [dragging, setDragging] = useState(false);
   const [pickedFiles, setPickFiles] = useState<File[]>([]);
   const { getRootProps, getInputProps, acceptedFiles } = useDropzone({

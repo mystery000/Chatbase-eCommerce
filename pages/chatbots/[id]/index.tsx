@@ -174,7 +174,7 @@ const Chatbot = () => {
             {chatbot?.name}
           </div>
           <div>
-            <Tabs defaultValue="chatbot">
+            <Tabs defaultValue="manage-sources">
               <TabsList className="w-full gap-4">
                 <TabsTrigger value="chatbot">Chatbot</TabsTrigger>
                 <TabsTrigger value="settings" onClick={handleResetSettings}>

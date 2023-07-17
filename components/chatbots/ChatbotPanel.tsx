@@ -137,7 +137,7 @@ const ChatbotPanel = ({
           <div>
             <div className="mb-4 flex justify-between border-b bg-white py-2">
               <div className="flex items-center">
-                {chatbot.active_profile_icon && (
+                {chatbot.active_profile_icon ? (
                   <img
                     className="m-1 rounded-full"
                     alt="profile picture"
@@ -146,6 +146,8 @@ const ChatbotPanel = ({
                     src={profileIcon}
                     loading={'lazy'}
                   />
+                ) : (
+                  <></>
                 )}
                 <h1 className="text-lg font-bold text-zinc-700">
                   {contact.name.active && contact.name.label}
