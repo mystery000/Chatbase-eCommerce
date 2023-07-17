@@ -4,22 +4,22 @@ import { useRouter } from 'next/router';
 import { Slider } from '@/components/ui/slider';
 import { Checkbox } from '@/components/ui/checkbox';
 
+const AppLayout = dynamic(() => import('@/components/layouts/AppLayout'));
+const PacmanLoader = dynamic(() => import('@/components/loaders/PacmanLoader'));
 const ChatbotPanel = dynamic(
   () => import('@/components/chatbots/ChatbotPanel'),
+  {
+    loading: () => <PacmanLoader />,
+  },
 );
-const AppLayout = dynamic(() => import('@/components/layouts/AppLayout'));
 const RetrainChatbot = dynamic(
   () => import('@/components/chatbots/RetrainChatbot'),
+  {
+    loading: () => <PacmanLoader />,
+  },
 );
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardFooter, CardContent } from '@/components/ui/card';
 
 import {
   Dialog,
@@ -96,27 +96,15 @@ const Chatbot = () => {
   }, [chatbot]);
 
   if (isLoadingChatbot || isLoadingSources) {
-    return (
-      <>
-        <p className="text-red/50 text-center">Loading...</p>
-      </>
-    );
+    return <PacmanLoader />;
   }
 
   if (!chatbot || !sources) {
-    return (
-      <>
-        <div className="text-gree/50 text-center">No Content</div>
-      </>
-    );
+    return <PacmanLoader />;
   }
 
   if (!stateChatbot) {
-    return (
-      <>
-        <div className="text-gree/50 text-center">initializing...</div>
-      </>
-    );
+    return <PacmanLoader />;
   }
 
   const handleDelete = async () => {

@@ -6,21 +6,13 @@ import {
   useRef,
   useEffect,
 } from 'react';
-import { RefreshCw } from 'lucide-react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { SendIcon } from '../icons/Send';
-import { Message } from '@/types/types';
-import { toast } from 'react-hot-toast';
-import { useRouter } from 'next/router';
 import dynamic from 'next/dynamic';
+import { toast } from 'react-hot-toast';
+import { Message } from '@/types/types';
+import { RefreshCw } from 'lucide-react';
+import { SendIcon } from '../icons/Send';
 import { chatCompletion } from '@/lib/api';
+import { Card, CardContent } from '@/components/ui/card';
 const AIMessage = dynamic(() => import('../message/AIMessage'));
 const ClientMessage = dynamic(() => import('../message/ClientMessage'));
 
@@ -37,7 +29,6 @@ const ChatbotPanel = ({
   profileIcon,
   initialMessages,
 }: ChatbotPanelProps) => {
-  const router = useRouter();
   const [query, setQuery] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');

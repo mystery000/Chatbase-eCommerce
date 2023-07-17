@@ -1,7 +1,6 @@
 import dynamic from 'next/dynamic';
-import { FC, useCallback, useState, ChangeEvent } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Upload } from 'lucide-react';
+import { FC, useState, ChangeEvent } from 'react';
+
 import {
   Card,
   CardContent,
@@ -9,14 +8,18 @@ import {
   CardHeader,
   CardTitle,
 } from '../ui/card';
-import { useDropzone } from 'react-dropzone';
+
 import cn from 'classnames';
-import useSources from '@/lib/hooks/use-sources';
-import { Trash2 } from 'lucide-react';
-import { Textarea } from '../ui/textarea';
 import { Label } from '../ui/label';
 import { Input } from '../ui/input';
+import { Upload } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
+import { Textarea } from '../ui/textarea';
+import { useDropzone } from 'react-dropzone';
 const Button = dynamic(() => import('@/components/ui/buttoneEx'));
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
+import useSources from '@/lib/hooks/use-sources';
 
 const RetrainChatbot: FC = () => {
   const { sources, mutate, isLoading } = useSources();

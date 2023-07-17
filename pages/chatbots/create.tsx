@@ -1,34 +1,30 @@
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
 import { FC, useCallback, useState, ChangeEvent } from 'react';
-import validator from 'validator';
-
-const AppLayout = dynamic(() => import('@/components/layouts/AppLayout'));
 
 import {
   Card,
+  CardTitle,
+  CardHeader,
   CardContent,
   CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
 } from '@/components/ui/card';
 
 import cn from 'classnames';
-import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-
-import { pluralize } from '@/lib/utils';
-import toast from 'react-hot-toast';
-import { createChatbot } from '@/lib/api';
-import useChatbots from '@/lib/hooks/use-chatbots';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { crwalWebsiteContentSize } from '@/lib/integrations/website';
-import { Trash2 } from 'lucide-react';
+import validator from 'validator';
 import { v4 as uuidv4 } from 'uuid';
-
+import toast from 'react-hot-toast';
+import { Trash2 } from 'lucide-react';
+import { pluralize } from '@/lib/utils';
+import { createChatbot } from '@/lib/api';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import useChatbots from '@/lib/hooks/use-chatbots';
+import { Textarea } from '@/components/ui/textarea';
 const Button = dynamic(() => import('@/components/ui/buttoneEx'));
+import { crwalWebsiteContentSize } from '@/lib/integrations/website';
+const AppLayout = dynamic(() => import('@/components/layouts/AppLayout'));
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const CreateChatbot: FC = () => {
   const MAX_FILES = 5;

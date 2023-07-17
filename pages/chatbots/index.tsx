@@ -2,8 +2,12 @@ import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
 
-const ChatbotCard = dynamic(() => import('@/components/chatbots/ChatbotCard'));
 const AppLayout = dynamic(() => import('@/components/layouts/AppLayout'));
+const PacmanLoader = dynamic(() => import('@/components/loaders/PacmanLoader'));
+const ChatbotCard = dynamic(() => import('@/components/chatbots/ChatbotCard'), {
+  loading: () => <PacmanLoader />,
+});
+
 import Button from '@/components/ui/buttoneEx';
 import useChatbots from '@/lib/hooks/use-chatbots';
 
@@ -13,7 +17,7 @@ export default function Chatbots() {
   const baseURL = router.pathname;
 
   if (loading || !chatbots) {
-    return <div className="text-center text-lg">Loading...</div>;
+    return <PacmanLoader />;
   }
 
   return (
