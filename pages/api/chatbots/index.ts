@@ -212,13 +212,14 @@ export default async function handler(
           ip_limit_timeframe,
           initial_messages,
           contact: DEFAULT_CONTACT_INFO,
+          active_profile_icon: true,
         };
 
         const { chatbotIcon, profileIcon } = DEFAULT_ICONS_PATH;
 
         await excuteQuery({
           query:
-            'INSERT INTO chatbots (chatbot_id, name, created_at, promptTemplate, model, temperature, visibility, ip_limit, ip_limit_message, ip_limit_timeframe, initial_messages, contact, chatbot_icon, profile_icon) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+            'INSERT INTO chatbots (chatbot_id, name, created_at, promptTemplate, model, temperature, visibility, ip_limit, ip_limit_message, ip_limit_timeframe, initial_messages, contact, chatbot_icon, profile_icon, active_profile_icon) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
           values: [
             chatbot_id,
             name,
@@ -234,6 +235,7 @@ export default async function handler(
             JSON.stringify(chatbot.contact),
             chatbotIcon,
             profileIcon,
+            true,
           ],
         });
 

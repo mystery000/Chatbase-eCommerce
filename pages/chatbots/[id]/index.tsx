@@ -786,7 +786,15 @@ const Chatbot = () => {
                             <label className="block text-sm font-medium text-gray-700">
                               Remove profile icon
                             </label>
-                            <Checkbox />
+                            <Checkbox
+                              checked={!stateChatbot.active_profile_icon}
+                              onCheckedChange={(value) =>
+                                setStateChatbot({
+                                  ...stateChatbot,
+                                  active_profile_icon: !value,
+                                })
+                              }
+                            />
                           </div>
                           <div className="pb-8">
                             <label className="mb-1 block text-sm font-medium text-gray-700">

@@ -14,7 +14,8 @@ create table chatbots (
   ip_limit_timeframe    int(10)             not null default 240        comment 'Limit time period',
   initial_messages      text                                            comment 'Initial messages',
   chatbot_icon          varchar(512)                                    comment 'Chatbot icon',
-  profile_icon          varchar(512)                                    comment 'Profile icon',       
+  profile_icon          varchar(512)                                    comment 'Profile icon',
+  active_profile_icon   boolean             not null default false      comment 'Whether or not to show the profile icon',       
   contact               JSON                not null                    comment 'Contact Information',          
   primary key (system_id)
 ) engine=innodb auto_increment=100 comment = 'Chatbot Information Form';
