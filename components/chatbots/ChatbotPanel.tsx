@@ -12,19 +12,20 @@ import { Message } from '@/types/types';
 import { RefreshCw } from 'lucide-react';
 import { SendIcon } from '../icons/Send';
 import { chatCompletion } from '@/lib/api';
+import { Chatbot, Contact } from '@/types/database';
 import { Card, CardContent } from '@/components/ui/card';
 const AIMessage = dynamic(() => import('../message/AIMessage'));
 const ClientMessage = dynamic(() => import('../message/ClientMessage'));
 
 type ChatbotPanelProps = {
-  chatbotId: string;
+  chatbot: Chatbot;
   playing?: boolean;
   profileIcon?: string;
   initialMessages?: string;
 };
 
 const ChatbotPanel = ({
-  chatbotId,
+  chatbot,
   playing,
   profileIcon,
   initialMessages,
@@ -85,7 +86,7 @@ const ChatbotPanel = ({
       setQuery('');
 
       try {
-        const response = await chatCompletion(chatbotId, question);
+        const response = await chatCompletion(chatbot.chatbot_id, question);
         setMessageState((state) => ({
           ...state,
           messages: [
@@ -111,7 +112,7 @@ const ChatbotPanel = ({
         console.error(err);
       }
     },
-    [query, chatbotId, playing, messageListRef],
+    [query, chatbot, playing, messageListRef],
   );
 
   //prevent empty submissions
@@ -126,6 +127,8 @@ const ChatbotPanel = ({
   const handleRefresh = useCallback(() => {
     if (playing) setMessageState({ messages: [] });
   }, [playing]);
+
+  const contact: Contact = JSON.parse(`${chatbot?.contact}`) as Contact;
 
   return (
     <Card>
@@ -142,7 +145,9 @@ const ChatbotPanel = ({
                   src={profileIcon}
                   loading={'lazy'}
                 />
-                <h1 className="text-lg font-bold text-zinc-700">Mohamed</h1>
+                <h1 className="text-lg font-bold text-zinc-700">
+                  {contact.name.active && contact.name.label}
+                </h1>
               </div>
               <button className="text-sm text-zinc-700 hover:text-zinc-600">
                 <RefreshCw onClick={handleRefresh} />

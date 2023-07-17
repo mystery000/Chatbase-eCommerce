@@ -174,7 +174,7 @@ const Chatbot = () => {
             {chatbot?.name}
           </div>
           <div>
-            <Tabs defaultValue="settings">
+            <Tabs defaultValue="chatbot">
               <TabsList className="w-full gap-4">
                 <TabsTrigger value="chatbot">Chatbot</TabsTrigger>
                 <TabsTrigger value="settings" onClick={handleResetSettings}>
@@ -302,7 +302,7 @@ const Chatbot = () => {
               </TabsList>
               <TabsContent value="chatbot">
                 <ChatbotPanel
-                  chatbotId={chatbot.chatbot_id}
+                  chatbot={chatbot}
                   playing={true}
                   profileIcon={`${router.basePath}/${stateChatbot.profile_icon}`}
                   initialMessages={chatbot.initial_messages}
@@ -823,7 +823,12 @@ const Chatbot = () => {
                         </div>
                         <div className="w-1/2 flex-1">
                           <ChatbotPanel
-                            chatbotId={chatbot.chatbot_id}
+                            chatbot={{
+                              ...stateChatbot,
+                              contact: JSON.stringify(
+                                stateChatbot.contact,
+                              ) as unknown as Contact,
+                            }}
                             profileIcon={
                               profileIcon ||
                               `${router.basePath}/${stateChatbot.profile_icon}`

@@ -8,15 +8,15 @@ const ChatbotPanel = dynamic(
 import useChatbot from '@/lib/hooks/use-chatbot';
 
 const SharedChatbot: FC = () => {
-  const { chatbot, mutate: mutateChatbot, isLoading } = useChatbot();
+  const { chatbot, isLoading } = useChatbot();
 
-  if (!chatbot) {
+  if (!chatbot || isLoading) {
     return <div className="text-center">Not Found</div>;
   }
 
   return (
     <>
-      <ChatbotPanel chatbotId={chatbot.chatbot_id} playing={true} />
+      <ChatbotPanel chatbot={chatbot} playing={true} />
     </>
   );
 };
