@@ -9,7 +9,6 @@ export default function useSources() {
   const {
     data: sources,
     mutate,
-    error,
     isLoading,
   } = useSWR(
     chatbot?.chatbot_id ? `/api/chatbots/${chatbot?.chatbot_id}/sources` : null,

@@ -1,5 +1,5 @@
 import dynamic from 'next/dynamic';
-import { FC, useState, ChangeEvent } from 'react';
+import { FC, useState, ChangeEvent, useEffect } from 'react';
 
 import {
   Card,
@@ -17,14 +17,34 @@ import { Trash2 } from 'lucide-react';
 import { Textarea } from '../ui/textarea';
 import { useDropzone } from 'react-dropzone';
 const Button = dynamic(() => import('@/components/ui/buttoneEx'));
+const PacmanLoader = dynamic(() => import('@/components/loaders/PacmanLoader'));
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
+import { Source } from '@/types/database';
 import useSources from '@/lib/hooks/use-sources';
 
-const RetrainChatbot: FC = () => {
+type stateSourcesType = {
+  files?: Source[];
+  text?: Source;
+  website?: Source[];
+  sitemap?: Source[];
+};
+const RetrainChatbot = () => {
   const { sources, mutate: mutateSources } = useSources();
   const [dragging, setDragging] = useState(false);
-  const [pickedFiles, setPickFiles] = useState<File[]>([]);
+  const [pickedFiles, setPickedFiles] = useState<File[]>([]);
+  const [stateSources, setStateSources] = useState<stateSourcesType>();
+
+  useEffect(() => {
+    if (!sources) return;
+    setStateSources({
+      files: sources.filter((source) => source.type === 'FILE') || [],
+      text: sources.find((source) => source.type === 'TEXT'),
+      website: sources.filter((source) => source.type === 'WEBSITE') || [],
+      sitemap: sources.filter((source) => source.type === 'SITEMAP') || [],
+    });
+  }, [sources]);
+
   const { getRootProps, getInputProps, acceptedFiles } = useDropzone({
     noKeyboard: true,
     maxFiles: 1000,
@@ -48,18 +68,23 @@ const RetrainChatbot: FC = () => {
     },
   });
 
+  useEffect(() => {
+    if (acceptedFiles?.length > 0) {
+      console.log(acceptedFiles);
+    }
+  }, [acceptedFiles]);
+  if (!sources || !stateSources) return <PacmanLoader />;
+
+  const handleRetrain = () => {
+    console.log(stateSources.text);
+  };
+
   const hasFiles = pickedFiles?.length > 0;
 
-  const file_chars = sources
-    .filter((source) => source.type === 'FILE')
-    .reduce((sum, source) => {
-      return sum + source.characters;
-    }, 0);
-  const text_chars = sources
-    .filter((source) => source.type === 'TEXT')
-    .reduce((sum, source) => {
-      return sum + source.characters;
-    }, 0);
+  const file_chars =
+    stateSources.files?.reduce((sum, source) => sum + source.characters, 0) ||
+    0;
+  const text_chars = stateSources?.text?.characters || 0;
 
   return (
     <>
@@ -119,9 +144,8 @@ const RetrainChatbot: FC = () => {
                       ({file_chars} chars)
                     </span>
                   </div>
-                  {sources
-                    .filter((item) => item.type === 'FILE')
-                    .map((source) => (
+                  {stateSources.files &&
+                    stateSources.files.map((source) => (
                       <div key={source.source_id}>
                         <div className="flex justify-between pb-4">
                           <div>
@@ -144,9 +168,18 @@ const RetrainChatbot: FC = () => {
                 <Textarea
                   className="my-2 w-full min-w-0 flex-auto appearance-none rounded-md border border-zinc-900/10 bg-white p-1 px-3 text-gray-900 shadow-md shadow-zinc-800/5 placeholder:text-zinc-400 focus:border-violet-500 focus:outline-none focus:ring-4 focus:ring-violet-500/10 sm:text-sm"
                   rows={20}
-                  value={
-                    sources?.find((source) => source.type === 'TEXT')?.content
-                  }
+                  value={stateSources.text?.content}
+                  onChange={(e: ChangeEvent<HTMLTextAreaElement>) => {
+                    if (!stateSources.text) return;
+                    setStateSources({
+                      ...stateSources,
+                      text: {
+                        ...stateSources.text,
+                        content: e.target.value,
+                        characters: e.target.value.length,
+                      },
+                    });
+                  }}
                 />
                 <p className="h-8 text-center text-sm text-gray-600">
                   {text_chars} characters
@@ -247,15 +280,27 @@ const RetrainChatbot: FC = () => {
               <CardTitle>
                 <p className="text-bold text-lg">Included Sources</p>
               </CardTitle>
-              <CardDescription></CardDescription>
+              <CardDescription>
+                <div className="flex space-x-3 py-1">
+                  <div className="text-sm text-zinc-700">{`${stateSources.files?.length} File(s) (${file_chars}) chars`}</div>
+                  <div className="text-sm text-zinc-700">{` | `}</div>
+                  <div className="text-sm text-zinc-700">{`${stateSources.text?.characters} text input chars`}</div>
+                  <div className="text-sm text-zinc-700">{` | `}</div>
+                  <div className="text-sm text-zinc-700">{`${
+                    (stateSources.sitemap?.length || 0) +
+                    (stateSources.website?.length || 0)
+                  } Links`}</div>
+                </div>
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <Button
                 className="w-full"
                 loadingMessage="Traning..."
                 variant={'plain'}
+                onClick={handleRetrain}
               >
-                Retrain
+                Retrain Chatbot
               </Button>
             </CardContent>
           </Card>
