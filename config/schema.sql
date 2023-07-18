@@ -24,10 +24,11 @@ drop table if exists sources;
 create table sources (
   system_id             bigint(20)          not null auto_increment     comment 'SYSTEM ID',
   chatbot_id            varchar(128)        not null                    comment 'Chatbot ID',
+  source_id             varchar(128)        not null                    comment 'Source ID = Vector ID',
+  name                  varchar(256)        not null                    comment 'Source Name', 
   type                  varchar(30)         not null                    comment 'Source Type: FILE, WEBSITE, SITEMAP, TEXT',
-  content               varchar(256)        not null                    comment 'Source content',
+  content               text                                            comment 'Source content',
   characters            bigint(15)          not null                    comment 'Characters counts',
-  source_id             varchar(128)        not null                    comment 'Source ID',
   vectors               int                 not null                    comment 'Vector counts',
   primary key (system_id)
 ) engine=innodb auto_increment=100 comment = 'Sources Information Form'; 

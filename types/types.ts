@@ -42,3 +42,8 @@ export type ModelConfig = {
   sectionsMatchCount: number;
   sectionsMatchThreshold: number;
 };
+
+export type CrawledData = {
+  characters: number;
+  content: string;
+};

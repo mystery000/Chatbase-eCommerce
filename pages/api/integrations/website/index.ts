@@ -1,3 +1,6 @@
+import { CrawledData } from '@/types/types';
+import axios from 'axios';
+import cheerio from 'cheerio';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 type Data =
@@ -5,7 +8,7 @@ type Data =
       status?: string;
       error?: string;
     }
-  | { size: number };
+  | CrawledData;
 
 const allowedMethods = ['POST'];
 
@@ -26,15 +29,21 @@ export default async function handler(
   }
 
   try {
-    const websiteRes = await fetch(url);
-    if (websiteRes.ok) {
-      const content = await websiteRes.text();
-
-      return res.status(200).json({ size: content.length || 0 });
-    }
+    const response = await axios.get(url);
+    const html = response.data;
+    const $ = cheerio.load(html);
+    const text = $('body')
+      .find('*')
+      .not('script, style')
+      .map((_, element) => $(element).text())
+      .get()
+      .join(' ');
+    return res
+      .status(200)
+      .json({ characters: text.length || 0, content: text });
   } catch {
-    // Handle below
+    return res.status(400).json({ error: 'Invalid requests' });
   }
 
-  return res.status(400).json({ status: 'Page is not accessible' });
+  return res.status(400).json({ error: 'Page is not accessible' });
 }

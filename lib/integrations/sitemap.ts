@@ -1,9 +1,9 @@
 import { CrawledData } from '@/types/types';
 
-export const crawlWebsite = async (
+export const crawlSitemap = async (
   url: string,
 ): Promise<CrawledData | null> => {
-  const res = await fetch('/api/integrations/website', {
+  const res = await fetch('/api/integrations/sitemap', {
     method: 'POST',
     body: JSON.stringify({ url }),
     headers: {

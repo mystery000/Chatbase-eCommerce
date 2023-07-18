@@ -1,6 +1,6 @@
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
-import { FC, useCallback, useState, ChangeEvent } from 'react';
+import { FC, useCallback, useState, useEffect, ChangeEvent } from 'react';
 
 import {
   Card,
@@ -14,44 +14,165 @@ import cn from 'classnames';
 import validator from 'validator';
 import { v4 as uuidv4 } from 'uuid';
 import toast from 'react-hot-toast';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Upload } from 'lucide-react';
 import { pluralize } from '@/lib/utils';
 import { createChatbot } from '@/lib/api';
+import { useDropzone } from 'react-dropzone';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import useChatbots from '@/lib/hooks/use-chatbots';
 import { Textarea } from '@/components/ui/textarea';
 const Button = dynamic(() => import('@/components/ui/buttoneEx'));
-import { crwalWebsiteContentSize } from '@/lib/integrations/website';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
+import { crawlWebsite } from '@/lib/integrations/website';
+import { crawlSitemap } from '@/lib/integrations/sitemap';
+
 const PacmanLoader = dynamic(() => import('@/components/loaders/PacmanLoader'));
 const AppLayout = dynamic(() => import('@/components/layouts/AppLayout'), {
   loading: () => <PacmanLoader />,
 });
+type SourceType = {
+  key: string;
+  name: string;
+  type: string;
+  content: string;
+  characters: number;
+};
+type stateSourcesType = {
+  files?: SourceType[];
+  text?: SourceType;
+  websites?: SourceType[];
+  sitemaps?: SourceType[];
+};
 
 const CreateChatbot: FC = () => {
-  const MAX_FILES = 5;
+  const MAX_FILES = 500;
   const router = useRouter();
-  const [loading, setLoading] = useState<boolean>(false);
-
-  // Data Sources files, text, website, sitemap, QA
-  const [pickedFiles, setPickFiles] = useState<File[]>([]);
   const [name, setName] = useState<string>('');
-  const [text, setText] = useState<string>('');
-  const [crawlURL, setCrawlURL] = useState<string>('');
-  const [crawlURLs, setCrawlURLs] = useState<
-    { size: number; url: string; id: string }[]
-  >([]);
-  const [crawling, setCrawling] = useState<boolean>(false);
-  const [sitemap, setSitemap] = useState('');
-  const [errorMessage, setErrorMessage] = useState<string>('');
-
+  const [websiteURL, setWebsiteURL] = useState<string>('');
+  const [sitemapURL, setSitemapURL] = useState<string>('');
+  const [invalidWebsiteMessage, setInvalidWebsiteMessage] =
+    useState<string>('');
+  const [invalidSitemapMessage, setInvalidSitemapMessage] =
+    useState<string>('');
+  const [dragging, setDragging] = useState(false);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [crawlingWebsite, setCrawlingWebsite] = useState<boolean>(false);
+  const [crawlingSitemap, setCrawlingSitemap] = useState<boolean>(false);
   const { chatbots, mutate: mutateChatbots } = useChatbots();
+  const [stateSources, setStateSources] = useState<stateSourcesType>();
 
-  const hasFiles = pickedFiles?.length || false;
-  const hasText = text.length;
-  const hasWebsiteOrSitemapURL = crawlURLs.length;
-  const hasSources = hasFiles || hasText || hasWebsiteOrSitemapURL;
+  const { getRootProps, getInputProps, acceptedFiles } = useDropzone({
+    noClick: false,
+    noKeyboard: true,
+    maxFiles: MAX_FILES,
+    maxSize: 1_000_000_000,
+    accept: {
+      'text/plain': ['.txt'],
+      'application/pdf': ['.pdf'],
+      'application/msword': ['.doc'],
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+        ['.docx'],
+      'application/vnd.oasis.opendocument.graphics': ['.odg'],
+      'application/vnd.oasis.opendocument.text': ['.odt'],
+    },
+    onDragEnter: () => {
+      setDragging(true);
+    },
+    onDragLeave: () => {
+      setDragging(false);
+    },
+    onDrop: () => {
+      setDragging(false);
+    },
+  });
+
+  useEffect(() => {
+    if (acceptedFiles?.length > 0) {
+      Promise.all(
+        acceptedFiles.map(async (file) => {
+          return file;
+        }),
+      ).then((files) => {
+        const data = files.map(
+          (file) =>
+            ({
+              key: uuidv4(),
+              name: file.name,
+              type: file.type,
+              characters: file.size,
+              content: 'no content',
+            } as SourceType),
+        );
+        setStateSources({
+          ...stateSources,
+          files: [...(stateSources?.files || []), ...data],
+        });
+      });
+    }
+  }, [acceptedFiles]);
+
+  const handleCrawlWebsite = useCallback(async () => {
+    if (!websiteURL || invalidWebsiteMessage) return;
+    try {
+      setCrawlingWebsite(true);
+      const data = await crawlWebsite(websiteURL);
+      if (data) {
+        const website = {
+          name: websiteURL,
+          content: data.content,
+          characters: data.characters,
+          type: 'WEBSITE',
+          key: uuidv4(),
+        } as SourceType;
+        setStateSources({
+          ...stateSources,
+          websites: [...(stateSources?.websites || []), website],
+        });
+      }
+      setCrawlingWebsite(false);
+      setWebsiteURL('');
+    } catch (error) {
+      console.log(error);
+      toast.error(`Failed to crawl the website`);
+      setCrawlingWebsite(false);
+    }
+  }, [websiteURL, invalidWebsiteMessage]);
+
+  const handleCrawlSitemap = useCallback(async () => {
+    if (!sitemapURL || invalidSitemapMessage) return;
+    try {
+      setCrawlingSitemap(true);
+      const data = await crawlSitemap(sitemapURL);
+      if (data) {
+        const sitemap = {
+          name: sitemapURL,
+          content: data.content,
+          characters: data.characters,
+          type: 'SITEMAP',
+          key: uuidv4(),
+        } as SourceType;
+        setStateSources({
+          ...stateSources,
+          sitemaps: [...(stateSources?.sitemaps || []), sitemap],
+        });
+      }
+      setCrawlingSitemap(false);
+      setWebsiteURL('');
+    } catch (error) {
+      console.log(error);
+      toast.error(`Failed to crawl the website`);
+      setCrawlingSitemap(false);
+    }
+  }, [sitemapURL, invalidSitemapMessage]);
+
+  const hasSources =
+    stateSources?.files?.length ||
+    stateSources?.sitemaps?.length ||
+    stateSources?.text?.characters ||
+    stateSources?.websites?.length ||
+    false;
 
   const handleSubmit = useCallback(async () => {
     setLoading(true);
@@ -62,64 +183,36 @@ const CreateChatbot: FC = () => {
         return;
       }
       if (!hasSources) {
-        toast.error('Please add your sources');
+        toast.error('Please provide sources for the chatbot');
         setLoading(false);
         return;
       }
 
-      const newChatbot = await createChatbot(
-        name,
-        pickedFiles || [],
-        text || '',
-        crawlURLs.map((data) => data.url),
-      );
-      await mutateChatbots([...(chatbots || []), newChatbot]);
-      setLoading(false);
-      toast.success('Your chatbot is trained and ready.');
-      setTimeout(() => {
-        router.push('/chatbots');
-      }, 500);
+      // const newChatbot = await createChatbot(
+      //   name,
+      //   pickedFiles || [],
+      //   text || '',
+      //   crawlURLs.map((data) => data.url),
+      // );
+      // await mutateChatbots([...(chatbots || []), newChatbot]);
+      // setLoading(false);
+      // toast.success('Your chatbot is trained and ready.');
+      // setTimeout(() => {
+      //   router.push('/chatbots');
+      // }, 500);
     } catch (error) {
       setLoading(false);
       console.log('Error', error);
     }
-  }, [pickedFiles, name, text, crawlURLs, hasSources]);
+  }, [name, hasSources, stateSources]);
 
-  const handleFileEvent = (event: React.ChangeEvent<HTMLInputElement>) => {
-    console.log(event.target.files);
-    const files = Array.from(event.target.files || []);
-    const fileLength = files?.length || 0;
-    if (fileLength > MAX_FILES) {
-      toast.error(`You can only add a maximum of ${MAX_FILES} files`);
-      return;
-    }
-    setPickFiles(files);
-  };
+  const hasFiles = stateSources?.files?.length || false;
+  const hasText = stateSources?.text?.characters || false;
+  const hasWebsite = stateSources?.websites?.length || false;
+  const hasSitemap = stateSources?.sitemaps?.length || false;
 
-  const onRemoveSelected = (id: string) => {
-    console.log(id);
-    setCrawlURLs((state) => state.filter((data) => data.id !== id));
-  };
-
-  const crawlWebsiteHandler = async () => {
-    if (!crawlURL || errorMessage) return;
-    try {
-      setCrawling(true);
-      const contentSize = await crwalWebsiteContentSize(crawlURL);
-      setCrawlURLs((state) => [
-        ...state,
-        { size: contentSize || 0, url: crawlURL, id: uuidv4() },
-      ]);
-      setCrawling(false);
-      setCrawlURL('');
-    } catch (error) {
-      console.log(error);
-      toast.error(`Failed to crawl due to ${error}`);
-      setCrawling(false);
-    }
-  };
-
-  const crawlSiteMapHandler = () => {};
+  const fileChars =
+    stateSources?.files?.reduce((sum, file) => sum + file.characters, 0) || 0;
 
   return (
     <>
@@ -134,26 +227,83 @@ const CreateChatbot: FC = () => {
                 <TabsTrigger value="sitoweb">Website</TabsTrigger>
               </TabsList>
               <TabsContent value="files">
-                <Card>
-                  <CardHeader className="text-center ">
-                    <CardTitle>Upload File</CardTitle>
-                    <CardDescription>
-                      NOTE: Uploading a PDF using safari doesn't work, we're
-                      looking into the issue.
-                      <br /> Make sure the text is OCR, i.e. you can copy it.
-                    </CardDescription>
-                    <CardContent>
-                      <div className="mt-4 w-full">
-                        <Input
-                          type="file"
-                          accept=".txt, .pdf, .doc, .docx, .odt, .odg, .ods, .odp, .odf"
-                          onChange={handleFileEvent}
-                          multiple
-                        />
+                <div className="m-auto w-3/4 max-w-md">
+                  <label className=" mb-2 mt-4 block text-center text-sm font-medium text-gray-900 dark:text-white">
+                    Upload Files
+                  </label>
+                  <div
+                    className={cn(
+                      'cursor-pointer rounded-lg border-2 border-dotted p-16 transition duration-300',
+                      {
+                        ' border-fuchsia-500 bg-fuchsia-500 bg-opacity-[3%]':
+                          dragging,
+                      },
+                    )}
+                    {...getRootProps()}
+                  >
+                    <input {...getInputProps()} />
+                    <div className="flex flex-col items-center justify-center gap-4">
+                      <Upload />
+                      <div className="items-center justify-center text-center">
+                        <p className="text-sm text-gray-600 ">
+                          Drag &amp; drop files here, or click to select files
+                        </p>
+                        <span
+                          className="text-xs text-gray-500 dark:text-gray-300"
+                          id="file_type_help"
+                        >
+                          Supported File Types: .txt, .pdf, .doc, .docx, .odt,
+                        </span>
                       </div>
-                    </CardContent>
-                  </CardHeader>
-                </Card>
+                    </div>
+                  </div>
+                  <p
+                    className="mt-1 text-center text-sm text-gray-500 dark:text-gray-300"
+                    id="file_input_help"
+                  >
+                    NOTE: Uploading a PDF using safari doesn't work, we're
+                    looking into the issue. Make sure the text is OCR'd, i.e.
+                    you can copy it.
+                  </p>
+                  {hasFiles && (
+                    <div className="pt-8">
+                      <div>
+                        <span className="b-2 font-semibold">
+                          Attached Files
+                        </span>
+                        <span className="ml-1 text-sm text-zinc-500">
+                          ({`${fileChars} chars`})
+                        </span>
+                      </div>
+                      {stateSources?.files?.map((source) => (
+                        <div key={source.key}>
+                          <div className="flex justify-between pb-4">
+                            <div>
+                              <span>{source.content}</span>
+                              <span className="ml-1 text-sm text-zinc-500">
+                                ({source.characters} chars)
+                              </span>
+                            </div>
+                            <button className="text-zinc-600 hover:text-zinc-900">
+                              <Trash2
+                                className="ml-1 h-4 w-4 text-red-600"
+                                onClick={() =>
+                                  setStateSources({
+                                    ...stateSources,
+                                    files:
+                                      stateSources.files?.filter(
+                                        (file) => file.key !== source.key,
+                                      ) || [],
+                                  })
+                                }
+                              />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </TabsContent>
               <TabsContent value="testo">
                 <Card>
@@ -172,13 +322,28 @@ const CreateChatbot: FC = () => {
                       <Label htmlFor="text">Data</Label>
                       <Textarea
                         id="text"
-                        className="h-56 whitespace-pre"
-                        value={text}
+                        className="whitespace-pre"
+                        value={stateSources?.text?.content || ''}
                         onChange={(event: ChangeEvent<HTMLTextAreaElement>) => {
-                          setText(event.target.value);
+                          setStateSources({
+                            ...stateSources,
+                            text: {
+                              key: uuidv4(),
+                              name: 'text',
+                              type: 'text',
+                              characters: event.target.value.length,
+                              content: event.target.value,
+                            } as SourceType,
+                          });
                         }}
+                        rows={15}
                       ></Textarea>
                     </div>
+                    {hasText && (
+                      <p className="mt-2 h-8 text-center text-sm text-gray-600">
+                        {stateSources?.text?.characters} characters
+                      </p>
+                    )}
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -195,29 +360,29 @@ const CreateChatbot: FC = () => {
                       <div className="flex space-x-2">
                         <Input
                           id="crawl"
-                          value={crawlURL}
+                          value={websiteURL}
                           onChange={(event: ChangeEvent<HTMLInputElement>) => {
                             const value = event.target.value;
                             if (validator.isURL(value)) {
-                              setErrorMessage('');
-                            } else setErrorMessage('Invalid URL');
-                            setCrawlURL(value);
+                              setInvalidWebsiteMessage('');
+                            } else setInvalidWebsiteMessage('Invalid URL');
+                            setWebsiteURL(value);
                           }}
                           placeholder="https://www.example.com"
                         ></Input>
                         <Button
                           variant={'plain'}
-                          onClick={crawlWebsiteHandler}
+                          onClick={handleCrawlWebsite}
                           loadingMessage="Crawling..."
-                          loading={crawling}
+                          loading={crawlingWebsite}
                         >
-                          {crawlURL.length > 1
-                            ? 'Fetch more links'
-                            : 'Fetch Links'}
+                          {hasWebsite ? 'Fetch more links' : 'Fetch Links'}
                         </Button>
                       </div>
                       <div className="my-2 text-sm text-rose-600">
-                        {crawlURL && errorMessage ? errorMessage : null}
+                        {websiteURL && invalidWebsiteMessage
+                          ? invalidWebsiteMessage
+                          : null}
                       </div>
                       <span className="py-4 text-sm text-zinc-600">
                         This will crawl all the links starting with the URL (not
@@ -241,19 +406,31 @@ const CreateChatbot: FC = () => {
                       <div className="flex space-x-2">
                         <Input
                           id="sitemap"
-                          value={sitemap}
+                          value={sitemapURL}
                           onChange={(event: ChangeEvent<HTMLInputElement>) => {
-                            setSitemap(event.target.value);
+                            const value = event.target.value;
+                            if (validator.isURL(value)) {
+                              setInvalidSitemapMessage('');
+                            } else setInvalidSitemapMessage('Invalid URL');
+                            setSitemapURL(event.target.value);
                           }}
                           placeholder="https://www.example.com/sitemap.xml"
                         ></Input>
                         <Button
                           variant={'plain'}
-                          loadingMessage="Fetching..."
-                          onClick={crawlSiteMapHandler}
+                          onClick={handleCrawlSitemap}
+                          loadingMessage="Crawling..."
+                          loading={crawlingSitemap}
                         >
-                          Load sitemap
+                          {hasSitemap
+                            ? 'Load additional sitemap'
+                            : 'Load sitemap'}
                         </Button>
+                      </div>
+                      <div className="my-2 text-sm text-rose-600">
+                        {sitemapURL && invalidSitemapMessage
+                          ? invalidSitemapMessage
+                          : null}
                       </div>
                     </div>
                     <div className="pt-8">
@@ -263,18 +440,53 @@ const CreateChatbot: FC = () => {
                       >
                         Included Links
                       </Label>
-                      {crawlURLs.map((data) => (
+                      {stateSources?.websites?.map((website) => (
                         <div
                           className="relative mt-2 rounded-md shadow-sm"
-                          key={data.id}
+                          key={website.key}
                         >
                           <div className="flex items-center">
-                            <Input value={data.url} disabled />
-                            <p className="ml-1 w-12 text-xs">{data.size}</p>
+                            <Input value={website.name} disabled />
+                            <p className="ml-1 w-12 text-xs">
+                              {website.characters}
+                            </p>
                             <button className="text-zinc-600 hover:text-zinc-900">
                               <Trash2
                                 className="ml-1 h-4 w-4 text-red-600"
-                                onClick={() => onRemoveSelected(data.id)}
+                                onClick={() =>
+                                  setStateSources({
+                                    ...stateSources,
+                                    websites: stateSources.websites?.filter(
+                                      (data) => data.key !== website.key,
+                                    ),
+                                  })
+                                }
+                              />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                      {stateSources?.sitemaps?.map((sitemap) => (
+                        <div
+                          className="relative mt-2 rounded-md shadow-sm"
+                          key={sitemap.key}
+                        >
+                          <div className="flex items-center">
+                            <Input value={sitemap.name} disabled />
+                            <p className="ml-1 w-12 text-xs">
+                              {sitemap.characters}
+                            </p>
+                            <button className="text-zinc-600 hover:text-zinc-900">
+                              <Trash2
+                                className="ml-1 h-4 w-4 text-red-600"
+                                onClick={() =>
+                                  setStateSources({
+                                    ...stateSources,
+                                    sitemaps: stateSources.sitemaps?.filter(
+                                      (data) => data.key !== sitemap.key,
+                                    ),
+                                  })
+                                }
                               />
                             </button>
                           </div>
@@ -290,46 +502,49 @@ const CreateChatbot: FC = () => {
             <Card>
               <CardHeader>
                 <CardTitle>
-                  <p className="text-bold text-lg">Included Sources</p>
+                  <p className="text-lg">Included Sources:</p>
                 </CardTitle>
                 <CardDescription>
                   <span className={cn('text-sm', { hidden: !hasFiles })}>
                     {`${pluralize(
-                      pickedFiles?.length || 0,
+                      stateSources?.files?.length || 0,
                       'file',
                       'files',
-                    )} added`}
+                    )} (${fileChars} chars)`}
                   </span>
                   <span
                     className={cn('text-sm', {
-                      hidden:
-                        !hasFiles || (!hasText && !hasWebsiteOrSitemapURL),
+                      hidden: !hasFiles || !hasText,
                     })}
                   >
                     {` | `}
                   </span>
                   <span className={cn('text-sm', { hidden: !hasText })}>
-                    {`${text.length} text input chars`}
+                    {`${stateSources?.text?.characters} text input chars`}
                   </span>
                   <span
                     className={cn('text-sm', {
-                      hidden: !hasText || !hasWebsiteOrSitemapURL,
+                      hidden:
+                        (!hasFiles && !hasText) || (!hasSitemap && !hasWebsite),
                     })}
                   >
                     {` | `}
                   </span>
                   <span
                     className={cn('text-sm', {
-                      hidden: !hasWebsiteOrSitemapURL,
+                      hidden: !hasWebsite && !hasSitemap,
                     })}
                   >
-                    {`${crawlURLs.length} Links`}
+                    {`${
+                      (stateSources?.sitemaps?.length || 0) +
+                      (stateSources?.websites?.length || 0)
+                    } Links`}
                   </span>
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <Button
-                  className="w-full"
+                  className="w-full transition duration-300"
                   variant={hasSources ? 'glow' : 'plain'}
                   loading={loading}
                   loadingMessage="creando..."

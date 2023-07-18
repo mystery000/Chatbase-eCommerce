@@ -29,6 +29,7 @@ type stateSourcesType = {
   website?: Source[];
   sitemap?: Source[];
 };
+
 const RetrainChatbot = () => {
   const { sources, mutate: mutateSources } = useSources();
   const [dragging, setDragging] = useState(false);
