@@ -11,7 +11,9 @@ import {
 } from '@/components/ui/card';
 
 import * as fs from 'fs';
+import JSZip from 'jszip';
 import cn from 'classnames';
+import mammoth from 'mammoth';
 import validator from 'validator';
 import { v4 as uuidv4 } from 'uuid';
 import toast from 'react-hot-toast';
@@ -29,7 +31,6 @@ import { crawlWebsite } from '@/lib/integrations/website';
 import { crawlSitemap } from '@/lib/integrations/sitemap';
 import { GlobalWorkerOptions, getDocument } from 'pdfjs-dist/build/pdf';
 import { TextItem } from 'pdfjs-dist/types/src/display/api';
-import mammoth from 'mammoth';
 GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/3.8.162/pdf.worker.min.js`;
 
 const PacmanLoader = dynamic(() => import('@/components/loaders/PacmanLoader'));
@@ -155,7 +156,29 @@ const CreateChatbot: FC = () => {
               } else if (
                 file.type === 'application/vnd.oasis.opendocument.text'
               ) {
-                console.log(file);
+                const data = event.target?.result;
+                if (data instanceof ArrayBuffer) {
+                  const zip = new JSZip();
+                  zip
+                    .loadAsync(data)
+                    .then((zip) => {
+                      if (zip.files['content.xml']) {
+                        zip
+                          .file('content.xml')
+                          ?.async('string')
+                          .then((content) => {
+                            resolve({
+                              key: uuidv4(),
+                              name: file.name,
+                              type: 'FILE',
+                              characters: content.length,
+                              content: content,
+                            } as SourceType);
+                          });
+                      }
+                    })
+                    .catch((err) => resolve({} as SourceType));
+                } else resolve({} as SourceType);
               } else if (file.type === 'text/plain') {
                 const arrayBuffer = event.target?.result;
                 if (arrayBuffer instanceof ArrayBuffer) {
