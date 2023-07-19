@@ -10,6 +10,7 @@ import {
   CardDescription,
 } from '@/components/ui/card';
 
+import * as fs from 'fs';
 import cn from 'classnames';
 import validator from 'validator';
 import { v4 as uuidv4 } from 'uuid';
@@ -24,9 +25,11 @@ import useChatbots from '@/lib/hooks/use-chatbots';
 import { Textarea } from '@/components/ui/textarea';
 const Button = dynamic(() => import('@/components/ui/buttoneEx'));
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-
 import { crawlWebsite } from '@/lib/integrations/website';
 import { crawlSitemap } from '@/lib/integrations/sitemap';
+import { GlobalWorkerOptions, getDocument } from 'pdfjs-dist/build/pdf';
+import { TextItem } from 'pdfjs-dist/types/src/display/api';
+GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/3.8.162/pdf.worker.min.js`;
 
 const PacmanLoader = dynamic(() => import('@/components/loaders/PacmanLoader'));
 const AppLayout = dynamic(() => import('@/components/layouts/AppLayout'), {
@@ -67,7 +70,7 @@ const CreateChatbot: FC = () => {
     noClick: false,
     noKeyboard: true,
     maxFiles: MAX_FILES,
-    maxSize: 1_000_000_000,
+    maxSize: 10_000_000_000, //10GB
     accept: {
       'text/plain': ['.txt'],
       'application/pdf': ['.pdf'],
@@ -95,19 +98,73 @@ const CreateChatbot: FC = () => {
           return file;
         }),
       ).then((files) => {
-        const data = files.map(
-          (file) =>
-            ({
-              key: uuidv4(),
-              name: file.name,
-              type: file.type,
-              characters: file.size,
-              content: 'no content',
-            } as SourceType),
-        );
-        setStateSources({
-          ...stateSources,
-          files: [...(stateSources?.files || []), ...data],
+        const loadFile = async (file: File) => {
+          return new Promise<SourceType>((resolve) => {
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+              if (file.type === 'application/pdf') {
+                const loadingTask = getDocument(
+                  event.target?.result as ArrayBuffer,
+                );
+                loadingTask.promise.then(async (pdf) => {
+                  try {
+                    let text = '';
+                    for (let i = 1; i <= pdf.numPages; i++) {
+                      const page = await pdf.getPage(i);
+                      const content = await page.getTextContent();
+                      text += content.items
+                        .map((item) => (item as TextItem).str)
+                        .join(' ');
+                    }
+                    resolve({
+                      key: uuidv4(),
+                      name: file.name,
+                      type: 'FILE',
+                      characters: text.length,
+                      content: text,
+                    } as SourceType);
+                  } catch (error) {
+                    console.log(error);
+                  }
+                });
+              } else if (file.type === 'application/msword') {
+                resolve({} as SourceType);
+              } else if (
+                file.type ===
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+              ) {
+              } else if (
+                file.type === 'application/vnd.oasis.opendocument.text'
+              ) {
+              } else if (file.type === 'text/plain') {
+                const arrayBuffer = event.target?.result;
+                if (arrayBuffer instanceof ArrayBuffer) {
+                  const decoder = new TextDecoder('utf-8');
+                  const text = decoder.decode(arrayBuffer);
+                  resolve({
+                    key: uuidv4(),
+                    name: file.name,
+                    type: 'FILE',
+                    characters: text.length,
+                    content: text,
+                  } as SourceType);
+                }
+              } else {
+                resolve({} as SourceType);
+              }
+            };
+            reader.readAsArrayBuffer(file);
+          });
+        };
+        Promise.all(files.map((file) => loadFile(file))).then((sources) => {
+          console.log(sources);
+          setStateSources({
+            ...stateSources,
+            files: [
+              ...(stateSources?.files || []),
+              ...sources.filter((source) => source.key),
+            ],
+          });
         });
       });
     }
@@ -279,7 +336,7 @@ const CreateChatbot: FC = () => {
                         <div key={source.key}>
                           <div className="flex justify-between pb-4">
                             <div>
-                              <span>{source.content}</span>
+                              <span>{source.name}</span>
                               <span className="ml-1 text-sm text-zinc-500">
                                 ({source.characters} chars)
                               </span>

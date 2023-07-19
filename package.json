@@ -42,7 +42,7 @@
     "mammoth": "^1.6.0",
     "mime": "^3.0.0",
     "next": "13.4.7",
-    "pdf-parse": "^1.1.1",
+    "pdfjs-dist": "^3.8.162",
     "postcss": "8.4.24",
     "puppeteer": "^19.11.1",
     "react": "18.2.0",
