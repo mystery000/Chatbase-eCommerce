@@ -29,6 +29,7 @@ import { crawlWebsite } from '@/lib/integrations/website';
 import { crawlSitemap } from '@/lib/integrations/sitemap';
 import { GlobalWorkerOptions, getDocument } from 'pdfjs-dist/build/pdf';
 import { TextItem } from 'pdfjs-dist/types/src/display/api';
+import mammoth from 'mammoth';
 GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/3.8.162/pdf.worker.min.js`;
 
 const PacmanLoader = dynamic(() => import('@/components/loaders/PacmanLoader'));
@@ -133,9 +134,28 @@ const CreateChatbot: FC = () => {
                 file.type ===
                 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
               ) {
+                const arrayBuffer = event.target?.result;
+                if (arrayBuffer instanceof ArrayBuffer) {
+                  mammoth
+                    .extractRawText({ arrayBuffer: arrayBuffer })
+                    .then((text) =>
+                      resolve({
+                        key: uuidv4(),
+                        name: file.name,
+                        type: 'FILE',
+                        characters: text.value.length,
+                        content: text.value,
+                      } as SourceType),
+                    )
+                    .catch((err) => {
+                      console.error(err);
+                      resolve({} as SourceType);
+                    });
+                }
               } else if (
                 file.type === 'application/vnd.oasis.opendocument.text'
               ) {
+                console.log(file);
               } else if (file.type === 'text/plain') {
                 const arrayBuffer = event.target?.result;
                 if (arrayBuffer instanceof ArrayBuffer) {
@@ -157,7 +177,6 @@ const CreateChatbot: FC = () => {
           });
         };
         Promise.all(files.map((file) => loadFile(file))).then((sources) => {
-          console.log(sources);
           setStateSources({
             ...stateSources,
             files: [
