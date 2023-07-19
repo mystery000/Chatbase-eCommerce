@@ -58,15 +58,16 @@ export default async function handler(
       const index = pinecone.Index(PINECONE_INDEX_NAME);
       await index.delete1({ deleteAll: true, namespace: chatbotId });
 
-      const chatbot = await excuteQuery({
+      await excuteQuery({
         query: 'DELETE FROM chatbots WHERE chatbot_id=(?)',
         values: [chatbotId],
       });
 
-      if (!chatbot)
-        return res
-          .status(NOT_FOUND)
-          .json({ error: `There is no chatbot with id is ${chatbotId}` });
+      await excuteQuery({
+        query: 'DELETE FROM sources WHERE chatbot_id=(?)',
+        values: [chatbotId],
+      });
+
       return res.status(SUCCESS).json({ status: 'OK' });
     } catch (error) {
       return res

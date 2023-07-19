@@ -52,6 +52,7 @@ import { deleteChatbot, updateChatbotSettings } from '@/lib/api';
 import useChatbot from '@/lib/hooks/use-chatbot';
 import useSources from '@/lib/hooks/use-sources';
 import { Chatbot, Contact } from '@/types/database';
+import useChatbots from '@/lib/hooks/use-chatbots';
 
 const Chatbot = () => {
   const [openDeleteDialog, setOpenDeleteDialog] = useState<boolean>(false);
@@ -63,7 +64,7 @@ const Chatbot = () => {
   const [chatbotIcon, setChatbotIcon] = useState<string>('');
   const [avatars, setAvatars] = useState<{ profile?: File; chatbot?: File }>();
   const [stateChatbot, setStateChatbot] = useState<Chatbot | null>(null);
-
+  const [deleting, setDeleting] = useState<boolean>(false);
   const router = useRouter();
 
   const {
@@ -71,6 +72,8 @@ const Chatbot = () => {
     isLoading: isLoadingChatbot,
     mutate: mutateChatbot,
   } = useChatbot();
+
+  const { mutate: mutateChatbots } = useChatbots();
 
   const {
     sources,
@@ -111,16 +114,22 @@ const Chatbot = () => {
 
   const handleDelete = async () => {
     try {
+      setDeleting(true);
       await deleteChatbot(chatbot.chatbot_id);
+      await mutateChatbots();
       await mutateChatbot();
+      setDeleting(false);
       toast.success('Deleted successfully.');
     } catch (error) {
+      setDeleting(false);
       console.log('error:', error);
       toast.error('Failed to delete a chatbot');
     } finally {
       setOpenDeleteDialog(false);
     }
-    router.push('/chatbots');
+    setTimeout(() => {
+      router.push('/chatbots');
+    }, 500);
   };
 
   const handleShareChatbot = async () => {
@@ -292,8 +301,12 @@ const Chatbot = () => {
                         <Button onClick={() => setOpenDeleteDialog(false)}>
                           Cancel
                         </Button>
-                        <Button variant={'destructive'} onClick={handleDelete}>
-                          Delete
+                        <Button
+                          variant={'destructive'}
+                          onClick={handleDelete}
+                          disabled={deleting}
+                        >
+                          {deleting ? 'Deleting...' : 'Delete'}
                         </Button>
                       </DialogFooter>
                     </DialogContent>
