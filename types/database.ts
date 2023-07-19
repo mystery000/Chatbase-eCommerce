@@ -35,9 +35,10 @@ export type SourceType = 'FILE' | 'TEXT' | 'WEBSITE' | 'SITEMAP';
 
 export type Source = {
   chatbot_id: string;
+  source_id: string;
+  name: string;
   type: SourceType;
   content: string;
   characters: number;
-  source_id: string;
   vectors: number;
 };

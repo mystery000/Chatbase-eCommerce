@@ -10,17 +10,25 @@ Chat History:
 Follow Up Input: {question}
 Standalone question:`;
 
-const QA_PROMPT = `I want you to act as a document that I have a conversation with. Your name is "AI Assistant." 
-You will give me answers from the given information. If the answer is not there, say exactly, "I didn't find anything about that." and then stop. 
-Refuse to answer a question that doesn't pertain to the info. Never break character.
-Answer only in German unless otherwise requested, and please do not give general medical advice from your basic data, but limit the information to the given document.
+const QA_PROMPT = `I want you to act as a document I'm having a conversation with. Your name is "AI Assistant". 
+You will give me answers based on the given information. If the answer isn't there, say specifically, "I couldn't find anything," and stop after that.
+Refuse to answer a question that isn't about the information. Never break character.
+Answer only in German if you can't respond in the language of the question, and please do not give any general medical advice from your basic data; limit the information to the document given.
 
 {context}
 
 Question: {question}
 Helpful answer in markdown:`;
 
-export const makeChain = (vectorstore: PineconeStore) => {
+type MakeChainOptions = {
+  CONDENSE_PROMPT?: string;
+  QA_PROMPT?: string;
+};
+
+export const makeChain = (
+  vectorstore: PineconeStore,
+  options?: MakeChainOptions,
+) => {
   const GPT3 = new ChatOpenAI({
     temperature: 0, // increase temepreature to get more creative answers
     modelName: 'gpt-3.5-turbo', //change this to gpt-4 if you have access
@@ -35,8 +43,8 @@ export const makeChain = (vectorstore: PineconeStore) => {
     GPT3,
     vectorstore.asRetriever(),
     {
-      qaTemplate: QA_PROMPT,
-      questionGeneratorTemplate: CONDENSE_PROMPT,
+      qaTemplate: options?.QA_PROMPT || QA_PROMPT,
+      questionGeneratorTemplate: options?.CONDENSE_PROMPT || CONDENSE_PROMPT,
       returnSourceDocuments: true, //The number of source documents returned is 4 by default
       memory: new BufferMemory({
         memoryKey: 'chat_history',

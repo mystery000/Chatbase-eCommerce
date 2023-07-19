@@ -150,7 +150,7 @@ const RetrainChatbot = () => {
                       <div key={source.source_id}>
                         <div className="flex justify-between pb-4">
                           <div>
-                            <span>{source.content}</span>
+                            <span>{source.name}</span>
                             <span className="ml-1 text-sm text-zinc-500">
                               ({source.characters} chars)
                             </span>
@@ -258,7 +258,7 @@ const RetrainChatbot = () => {
                             key={source.source_id}
                           >
                             <div className="flex items-center">
-                              <Input value={source.content} disabled />
+                              <Input value={source.name} disabled />
                               <p className="ml-1 w-12 text-xs">
                                 {source.characters}
                               </p>

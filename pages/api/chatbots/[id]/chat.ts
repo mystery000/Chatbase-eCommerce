@@ -64,7 +64,7 @@ export default async function handler(
     );
 
     //create chain
-    const chain = makeChain(vectorStore);
+    const chain = makeChain(vectorStore, { QA_PROMPT: chatbot.promptTemplate });
     //Ask a question using chat history
     const response = await chain.call({
       question: sanitizedQuestion,
