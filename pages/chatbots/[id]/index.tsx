@@ -65,6 +65,7 @@ const Chatbot = () => {
   const [avatars, setAvatars] = useState<{ profile?: File; chatbot?: File }>();
   const [stateChatbot, setStateChatbot] = useState<Chatbot | null>(null);
   const [deleting, setDeleting] = useState<boolean>(false);
+  const [saving, setSaving] = useState<boolean>(false);
   const router = useRouter();
 
   const {
@@ -162,11 +163,15 @@ const Chatbot = () => {
 
   const handleSubmit = async () => {
     if (!stateChatbot) return;
+    setSaving(true);
     try {
       await updateChatbotSettings(stateChatbot, avatars);
       mutateChatbot();
+      mutateChatbots();
       toast.success('Saved');
+      setSaving(false);
     } catch (error) {
+      setSaving(false);
       console.log(error);
     }
   };
@@ -860,8 +865,12 @@ const Chatbot = () => {
                       </div>
                     </div>
                     <div className="mt-2 flex justify-end">
-                      <Button className="w-full" onClick={handleSubmit}>
-                        Save Changes
+                      <Button
+                        className="w-full"
+                        onClick={handleSubmit}
+                        disabled={saving}
+                      >
+                        {saving ? 'Saving...' : 'Save Changes'}
                       </Button>
                     </div>
                   </CardContent>
