@@ -25,7 +25,7 @@ export default function Chatbots() {
   return (
     <>
       <AppLayout>
-        <div className="mx-auto mt-4 flex w-4/5 flex-col gap-12">
+        <div className="mx-auto mt-4 flex w-1/2 flex-col gap-12">
           <div className="flex flex-row justify-between">
             <h1 className="grow text-2xl font-extrabold text-black md:text-3xl">
               My Chatbots{' '}
@@ -37,7 +37,7 @@ export default function Chatbots() {
               </Button>
             </Link>
           </div>
-          <div className="flex flex-wrap justify-between gap-4">
+          <div className="flex flex-wrap justify-start gap-12">
             {chatbots?.map((chatbot) => (
               <ChatbotCard
                 key={`chatbot-card-${chatbot.chatbot_id}`}
