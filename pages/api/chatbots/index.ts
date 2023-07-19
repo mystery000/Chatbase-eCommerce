@@ -1,19 +1,12 @@
-import * as fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
 import excuteQuery from '@/lib/mysql';
 import { Chatbot } from '@/types/database';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { PINECONE_INDEX_NAME } from '@/config/pinecone';
 import { pinecone } from '@/lib/pinecone/pinecone-client';
-import { PDFLoader } from 'langchain/document_loaders/fs/pdf';
 import { OpenAIEmbeddings } from 'langchain/embeddings/openai';
 import { PineconeStore } from 'langchain/vectorstores/pinecone';
-import { TextLoader } from 'langchain/document_loaders/fs/text';
-import { DocxLoader } from 'langchain/document_loaders/fs/docx';
-import { BaseDocumentLoader } from 'langchain/document_loaders/base';
 import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
-import { UnstructuredLoader } from 'langchain/document_loaders/fs/unstructured';
-import { PuppeteerWebBaseLoader } from 'langchain/document_loaders/web/puppeteer';
 import { BAD_METHOD, BAD_REQUEST, ERROR, SUCCESS } from '@/config/HttpStatus';
 
 import {
@@ -28,6 +21,7 @@ import mime from 'mime';
 import { join } from 'path';
 import { IncomingForm } from 'formidable';
 import { parseForm } from '@/lib/parse-form';
+import { StateSourceType, StateSourcesType } from '@/types/types';
 
 type Data = { status?: string; error?: string } | Chatbot[] | Chatbot;
 
@@ -66,10 +60,8 @@ export default async function handler(
   } else if (req.method === 'POST') {
     try {
       const { fields, files, chatbot_id } = await parseForm(req);
+
       const name = fields.name[0];
-      const text = fields.text[0];
-      const urls = fields.urls;
-      const created_at = new Date();
 
       if (!name || !chatbot_id) {
         return res.status(BAD_REQUEST).json({
@@ -77,11 +69,20 @@ export default async function handler(
         });
       }
 
-      if (!files && !urls && !text)
+      const hasFiles = fields?.files?.length || false;
+      const hasText = fields?.text?.length || false;
+      const hasWebsite = fields?.websites?.length || false;
+      const hasSitemap = fields?.sitemaps?.length || false;
+
+      const hasSources = hasFiles || hasText || hasWebsite || hasSitemap;
+
+      if (!hasSources)
         return res.status(BAD_REQUEST).json({
           error: 'There is no provided sources',
         });
 
+      const created_at = new Date();
+      // Save embedding vectors on pinecone store and create new sources
       try {
         const textSplitter = new RecursiveCharacterTextSplitter({
           chunkSize: 1000,
@@ -98,90 +99,125 @@ export default async function handler(
           textKey: 'text',
         });
 
-        /*load raw docs from the all files in the directory */
-        fs.readdirSync(`public/sources/${chatbot_id}`).forEach(async (file) => {
-          const path = `public/sources/${chatbot_id}/${file}`;
-          let loader: BaseDocumentLoader = new PDFLoader(path);
-          if (path.endsWith('.pdf')) loader = new PDFLoader(path);
-          if (path.endsWith('.txt')) loader = new TextLoader(path);
-          if (path.endsWith('.doc')) loader = new UnstructuredLoader(path);
-          if (path.endsWith('.docx')) loader = new DocxLoader(path);
-          const rawDocs = await loader.load();
-          /* Split text into chunks */
-
-          const docs = await textSplitter.splitDocuments(rawDocs);
-          const characters = docs.reduce(
-            (sum, doc) => sum + doc.pageContent.length,
-            0,
-          );
-
+        if (hasText) {
+          const text = JSON.parse(fields.text[0]) as StateSourceType;
+          const docs = await textSplitter.createDocuments([text.content]);
           const sourceId = uuidv4();
-          const vector_ids = docs.map((_, idx) => `${sourceId}-${idx}`);
+          const vector_ids = [];
+
+          // generate vector ids to be saved in the Pinecone vector store.
+          for (let i = 0; i < docs.length; i++)
+            vector_ids.push(`${sourceId}-${i}`);
+
           pineconeStore.addDocuments(docs, vector_ids);
 
           await excuteQuery({
             query:
-              'INSERT INTO sources(chatbot_id, type, content, characters, source_id, vectors) VALUES (?,?,?,?,?,?)',
+              'INSERT INTO sources(chatbot_id, source_id, name, type, content, characters, vectors) VALUES (?,?,?,?,?,?,?)',
             values: [
               chatbot_id,
-              'FILE',
-              file,
-              characters,
               sourceId,
-              docs.length,
-            ],
-          });
-        });
-
-        if (text) {
-          const docs = await textSplitter.createDocuments([text]);
-          const sourceId = uuidv4();
-          const vector_ids = docs.map((_, idx) => `${sourceId}-${idx}`);
-          pineconeStore.addDocuments(docs, vector_ids);
-
-          await excuteQuery({
-            query:
-              'INSERT INTO sources(chatbot_id, type, content, characters, source_id, vectors) VALUES (?,?,?,?,?,?)',
-            values: [
-              chatbot_id,
-              'TEXT',
-              text,
-              text.length,
-              sourceId,
-              docs.length,
+              text.name,
+              text.type,
+              text.content,
+              text.characters,
+              vector_ids.length,
             ],
           });
         }
+        if (hasFiles) {
+          if (Array.isArray(fields.files)) {
+            fields.files.forEach(async (data) => {
+              const file = JSON.parse(data) as StateSourceType;
+              const docs = await textSplitter.createDocuments([file.content]);
+              const sourceId = uuidv4();
+              const vector_ids = [];
 
-        if (urls && Array.isArray(urls)) {
-          urls.forEach(async (url) => {
-            const loader = new PuppeteerWebBaseLoader(url);
-            const rawDocs = await loader.load();
-            /* Split text into chunks */
+              // generate vector ids to be saved in the Pinecone vector store.
+              for (let i = 0; i < docs.length; i++)
+                vector_ids.push(`${sourceId}-${i}`);
 
-            const docs = await textSplitter.splitDocuments(rawDocs);
-            const characters = docs.reduce(
-              (sum, doc) => sum + doc.pageContent.length,
-              0,
-            );
+              pineconeStore.addDocuments(docs, vector_ids);
 
-            const sourceId = uuidv4();
-            const vector_ids = docs.map((_, idx) => `${sourceId}-${idx}`);
-            pineconeStore.addDocuments(docs, vector_ids);
-
-            await excuteQuery({
-              query:
-                'INSERT INTO sources(chatbot_id, type, content, characters, source_id, vectors) VALUES (?,?,?,?,?,?)',
-              values: [
-                chatbot_id,
-                'WEBSITE',
-                url,
-                characters,
-                sourceId,
-                docs.length,
-              ],
+              await excuteQuery({
+                query:
+                  'INSERT INTO sources(chatbot_id, source_id, name, type, content, characters, vectors) VALUES (?,?,?,?,?,?,?)',
+                values: [
+                  chatbot_id,
+                  sourceId,
+                  file.name,
+                  file.type,
+                  'Load more....',
+                  file.characters,
+                  vector_ids.length,
+                ],
+              });
             });
-          });
+          }
+        }
+        if (hasWebsite) {
+          if (Array.isArray(fields.websites)) {
+            fields.websites.forEach(async (data) => {
+              const website = JSON.parse(data) as StateSourceType;
+              const docs = await textSplitter.createDocuments([
+                website.content,
+              ]);
+              const sourceId = uuidv4();
+              const vector_ids = [];
+
+              // generate vector ids to be saved in the Pinecone vector store.
+              for (let i = 0; i < docs.length; i++)
+                vector_ids.push(`${sourceId}-${i}`);
+
+              pineconeStore.addDocuments(docs, vector_ids);
+
+              await excuteQuery({
+                query:
+                  'INSERT INTO sources(chatbot_id, source_id, name, type, content, characters, vectors) VALUES (?,?,?,?,?,?,?)',
+                values: [
+                  chatbot_id,
+                  sourceId,
+                  website.name,
+                  website.type,
+                  'Load more....',
+                  website.characters,
+                  vector_ids.length,
+                ],
+              });
+            });
+          }
+        }
+        if (hasSitemap) {
+          if (Array.isArray(fields.sitemaps)) {
+            fields.sitemaps.forEach(async (data) => {
+              const sitemap = JSON.parse(data) as StateSourceType;
+              const docs = await textSplitter.createDocuments([
+                sitemap.content,
+              ]);
+              const sourceId = uuidv4();
+              const vector_ids = [];
+
+              // generate vector ids to be saved in the Pinecone vector store.
+              for (let i = 0; i < docs.length; i++)
+                vector_ids.push(`${sourceId}-${i}`);
+
+              pineconeStore.addDocuments(docs, vector_ids);
+
+              await excuteQuery({
+                query:
+                  'INSERT INTO sources(chatbot_id, source_id, name, type, content, characters, vectors) VALUES (?,?,?,?,?,?,?)',
+                values: [
+                  chatbot_id,
+                  sourceId,
+                  sitemap.name,
+                  sitemap.type,
+                  'Load more....',
+                  sitemap.characters,
+                  vector_ids.length,
+                ],
+              });
+            });
+          }
         }
       } catch (error) {
         console.log('error', error);
@@ -189,6 +225,7 @@ export default async function handler(
           .status(ERROR)
           .json({ error: `Failed to train your data due to ${error}` });
       }
+      // Create new Chatbot
       try {
         const { promptTemplate, model, temperature } = DEFAULT_MODEL_CONFIG;
         const {
@@ -219,7 +256,7 @@ export default async function handler(
 
         await excuteQuery({
           query:
-            'INSERT INTO chatbots (chatbot_id, name, created_at, promptTemplate, model, temperature, visibility, ip_limit, ip_limit_message, ip_limit_timeframe, initial_messages, contact, chatbot_icon, profile_icon, active_profile_icon) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+            'INSERT INTO chatbots (chatbot_id, name, created_at, promptTemplate, model, temperature, visibility, ip_limit, ip_limit_message, ip_limit_timeframe, initial_messages, contact, chatbot_icon, profile_icon, active_profile_icon) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
           values: [
             chatbot_id,
             name,
@@ -238,13 +275,7 @@ export default async function handler(
             true,
           ],
         });
-
-        await excuteQuery({
-          query:
-            'INSERT INTO sources (chatbot_id, type, content) VALUES (?,?,?)',
-          values: [chatbot_id],
-        });
-
+        console.log(chatbot);
         return res.status(SUCCESS).json(chatbot);
       } catch (error) {
         return res

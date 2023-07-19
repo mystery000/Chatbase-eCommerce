@@ -1,22 +1,27 @@
 import { Chatbot } from '@/types/database';
 import { getResponseOrThrow } from './utils';
-
-interface SwissFile extends File {
-  type: string;
-}
+import { StateSourcesType } from '@/types/types';
 
 export const createChatbot = async (
   name: string,
-  documents: File[],
-  text: string,
-  urls: string[],
+  sources: StateSourcesType,
 ) => {
   const payload = new FormData();
   payload.append('name', name);
-  payload.append('text', text);
-  urls.map((url) => payload.append('urls', url));
-  documents.forEach((document) => payload.append('documents', document));
-
+  if (sources.text) payload.append('text', JSON.stringify(sources.text));
+  if (sources.files?.length) {
+    sources.files.map((file) => payload.append('files', JSON.stringify(file)));
+  }
+  if (sources.websites?.length) {
+    sources.websites.map((website) =>
+      payload.append('websites', JSON.stringify(website)),
+    );
+  }
+  if (sources.sitemaps?.length) {
+    sources.sitemaps.map((sitemap) =>
+      payload.append('sitemaps', JSON.stringify(sitemap)),
+    );
+  }
   const res = await fetch('/api/chatbots', {
     method: 'POST',
     body: payload,

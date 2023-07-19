@@ -47,3 +47,18 @@ export type CrawledData = {
   characters: number;
   content: string;
 };
+
+export type StateSourceType = {
+  key: string;
+  name: string;
+  type: string;
+  content: string;
+  characters: number;
+};
+
+export type StateSourcesType = {
+  files?: StateSourceType[];
+  text?: StateSourceType;
+  websites?: StateSourceType[];
+  sitemaps?: StateSourceType[];
+};

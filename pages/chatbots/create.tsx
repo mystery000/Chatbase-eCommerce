@@ -32,25 +32,13 @@ import { crawlWebsite } from '@/lib/integrations/website';
 import { crawlSitemap } from '@/lib/integrations/sitemap';
 import { GlobalWorkerOptions, getDocument } from 'pdfjs-dist/build/pdf';
 import { TextItem } from 'pdfjs-dist/types/src/display/api';
+import { StateSourceType, StateSourcesType } from '@/types/types';
 GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/3.8.162/pdf.worker.min.js`;
 
 const PacmanLoader = dynamic(() => import('@/components/loaders/PacmanLoader'));
 const AppLayout = dynamic(() => import('@/components/layouts/AppLayout'), {
   loading: () => <PacmanLoader />,
 });
-type SourceType = {
-  key: string;
-  name: string;
-  type: string;
-  content: string;
-  characters: number;
-};
-type stateSourcesType = {
-  files?: SourceType[];
-  text?: SourceType;
-  websites?: SourceType[];
-  sitemaps?: SourceType[];
-};
 
 const CreateChatbot: FC = () => {
   const MAX_FILES = 500;
@@ -68,7 +56,7 @@ const CreateChatbot: FC = () => {
   const [crawlingWebsite, setCrawlingWebsite] = useState<boolean>(false);
   const [crawlingSitemap, setCrawlingSitemap] = useState<boolean>(false);
   const { chatbots, mutate: mutateChatbots } = useChatbots();
-  const [stateSources, setStateSources] = useState<stateSourcesType>();
+  const [stateSources, setStateSources] = useState<StateSourcesType>();
 
   const { getRootProps, getInputProps, acceptedFiles } = useDropzone({
     noClick: false,
@@ -105,7 +93,7 @@ const CreateChatbot: FC = () => {
         }),
       ).then((files) => {
         const loadFile = async (file: File) => {
-          return new Promise<SourceType>((resolve) => {
+          return new Promise<StateSourceType>((resolve) => {
             const reader = new FileReader();
             reader.onload = async (event) => {
               if (file.type === 'application/pdf') {
@@ -128,13 +116,13 @@ const CreateChatbot: FC = () => {
                       type: 'FILE',
                       characters: text.length,
                       content: text,
-                    } as SourceType);
+                    } as StateSourceType);
                   } catch (error) {
                     console.log(error);
                   }
                 });
               } else if (file.type === 'application/msword') {
-                resolve({} as SourceType);
+                resolve({} as StateSourceType);
               } else if (
                 file.type ===
                 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
@@ -150,11 +138,11 @@ const CreateChatbot: FC = () => {
                         type: 'FILE',
                         characters: text.value.length,
                         content: text.value,
-                      } as SourceType),
+                      } as StateSourceType),
                     )
                     .catch((err) => {
                       console.error(err);
-                      resolve({} as SourceType);
+                      resolve({} as StateSourceType);
                     });
                 }
               } else if (
@@ -177,12 +165,12 @@ const CreateChatbot: FC = () => {
                               type: 'FILE',
                               characters: content.length,
                               content: content,
-                            } as SourceType);
+                            } as StateSourceType);
                           });
                       }
                     })
-                    .catch((err) => resolve({} as SourceType));
-                } else resolve({} as SourceType);
+                    .catch((err) => resolve({} as StateSourceType));
+                } else resolve({} as StateSourceType);
               } else if (file.type === 'text/plain') {
                 const arrayBuffer = event.target?.result;
                 if (arrayBuffer instanceof ArrayBuffer) {
@@ -194,10 +182,10 @@ const CreateChatbot: FC = () => {
                     type: 'FILE',
                     characters: text.length,
                     content: text,
-                  } as SourceType);
+                  } as StateSourceType);
                 }
               } else {
-                resolve({} as SourceType);
+                resolve({} as StateSourceType);
               }
             };
             reader.readAsArrayBuffer(file);
@@ -230,7 +218,7 @@ const CreateChatbot: FC = () => {
           characters: data.characters,
           type: 'WEBSITE',
           key: uuidv4(),
-        } as SourceType;
+        } as StateSourceType;
         setStateSources({
           ...stateSources,
           websites: [...(stateSources?.websites || []), website],
@@ -257,7 +245,7 @@ const CreateChatbot: FC = () => {
           characters: data.characters,
           type: 'SITEMAP',
           key: uuidv4(),
-        } as SourceType;
+        } as StateSourceType;
         setStateSources({
           ...stateSources,
           sitemaps: [...(stateSources?.sitemaps || []), sitemap],
@@ -272,12 +260,12 @@ const CreateChatbot: FC = () => {
     }
   }, [sitemapURL, invalidSitemapMessage]);
 
-  const hasSources =
-    stateSources?.files?.length ||
-    stateSources?.sitemaps?.length ||
-    stateSources?.text?.characters ||
-    stateSources?.websites?.length ||
-    false;
+  const hasFiles = stateSources?.files?.length || false;
+  const hasText = stateSources?.text?.characters || false;
+  const hasWebsite = stateSources?.websites?.length || false;
+  const hasSitemap = stateSources?.sitemaps?.length || false;
+
+  const hasSources = hasFiles || hasText || hasWebsite || hasSitemap;
 
   const handleSubmit = useCallback(async () => {
     setLoading(true);
@@ -287,34 +275,23 @@ const CreateChatbot: FC = () => {
         setLoading(false);
         return;
       }
-      if (!hasSources) {
+      if (!hasSources || !stateSources) {
         toast.error('Please provide sources for the chatbot');
         setLoading(false);
         return;
       }
-      console.log(stateSources);
-      // const newChatbot = await createChatbot(
-      //   name,
-      //   pickedFiles || [],
-      //   text || '',
-      //   crawlURLs.map((data) => data.url),
-      // );
-      // await mutateChatbots([...(chatbots || []), newChatbot]);
-      // setLoading(false);
-      // toast.success('Your chatbot is trained and ready.');
-      // setTimeout(() => {
-      //   router.push('/chatbots');
-      // }, 500);
+      const newChatbot = await createChatbot(name, stateSources);
+      await mutateChatbots([...(chatbots || []), newChatbot]);
+      setLoading(false);
+      toast.success('Your chatbot is trained and ready.');
+      setTimeout(() => {
+        router.push('/chatbots');
+      }, 500);
     } catch (error) {
       setLoading(false);
       console.log('Error', error);
     }
   }, [name, hasSources, stateSources]);
-
-  const hasFiles = stateSources?.files?.length || false;
-  const hasText = stateSources?.text?.characters || false;
-  const hasWebsite = stateSources?.websites?.length || false;
-  const hasSitemap = stateSources?.sitemaps?.length || false;
 
   const fileChars =
     stateSources?.files?.reduce((sum, file) => sum + file.characters, 0) || 0;
@@ -448,10 +425,10 @@ const CreateChatbot: FC = () => {
                             text: {
                               key: uuidv4(),
                               name: 'text',
-                              type: 'text',
+                              type: 'TEXT',
                               characters: event.target.value.length,
                               content: event.target.value,
-                            } as SourceType,
+                            } as StateSourceType,
                           });
                         }}
                         rows={15}
