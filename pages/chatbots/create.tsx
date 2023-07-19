@@ -10,16 +10,14 @@ import {
   CardDescription,
 } from '@/components/ui/card';
 
-import * as fs from 'fs';
-import JSZip from 'jszip';
 import cn from 'classnames';
-import mammoth from 'mammoth';
 import validator from 'validator';
 import { v4 as uuidv4 } from 'uuid';
 import toast from 'react-hot-toast';
 import { pluralize } from '@/lib/utils';
 import { createChatbot } from '@/lib/api';
 import { ClipLoader } from 'react-spinners';
+import { parseFile } from '@/lib/parse-file';
 import { useDropzone } from 'react-dropzone';
 import { Trash2, Upload } from 'lucide-react';
 import { Label } from '@/components/ui/label';
@@ -30,8 +28,7 @@ const Button = dynamic(() => import('@/components/ui/buttoneEx'));
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { crawlWebsite } from '@/lib/integrations/website';
 import { crawlSitemap } from '@/lib/integrations/sitemap';
-import { GlobalWorkerOptions, getDocument } from 'pdfjs-dist/build/pdf';
-import { TextItem } from 'pdfjs-dist/types/src/display/api';
+import { GlobalWorkerOptions } from 'pdfjs-dist/build/pdf';
 import { StateSourceType, StateSourcesType } from '@/types/types';
 GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/3.8.162/pdf.worker.min.js`;
 
@@ -92,106 +89,7 @@ const CreateChatbot: FC = () => {
           return file;
         }),
       ).then((files) => {
-        const loadFile = async (file: File) => {
-          return new Promise<StateSourceType>((resolve) => {
-            const reader = new FileReader();
-            reader.onload = async (event) => {
-              if (file.type === 'application/pdf') {
-                const loadingTask = getDocument(
-                  event.target?.result as ArrayBuffer,
-                );
-                loadingTask.promise.then(async (pdf) => {
-                  try {
-                    let text = '';
-                    for (let i = 1; i <= pdf.numPages; i++) {
-                      const page = await pdf.getPage(i);
-                      const content = await page.getTextContent();
-                      text += content.items
-                        .map((item) => (item as TextItem).str)
-                        .join(' ');
-                    }
-                    resolve({
-                      key: uuidv4(),
-                      name: file.name,
-                      type: 'FILE',
-                      characters: text.length,
-                      content: text,
-                    } as StateSourceType);
-                  } catch (error) {
-                    console.log(error);
-                  }
-                });
-              } else if (file.type === 'application/msword') {
-                resolve({} as StateSourceType);
-              } else if (
-                file.type ===
-                'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-              ) {
-                const arrayBuffer = event.target?.result;
-                if (arrayBuffer instanceof ArrayBuffer) {
-                  mammoth
-                    .extractRawText({ arrayBuffer: arrayBuffer })
-                    .then((text) =>
-                      resolve({
-                        key: uuidv4(),
-                        name: file.name,
-                        type: 'FILE',
-                        characters: text.value.length,
-                        content: text.value,
-                      } as StateSourceType),
-                    )
-                    .catch((err) => {
-                      console.error(err);
-                      resolve({} as StateSourceType);
-                    });
-                }
-              } else if (
-                file.type === 'application/vnd.oasis.opendocument.text'
-              ) {
-                const data = event.target?.result;
-                if (data instanceof ArrayBuffer) {
-                  const zip = new JSZip();
-                  zip
-                    .loadAsync(data)
-                    .then((zip) => {
-                      if (zip.files['content.xml']) {
-                        zip
-                          .file('content.xml')
-                          ?.async('string')
-                          .then((content) => {
-                            resolve({
-                              key: uuidv4(),
-                              name: file.name,
-                              type: 'FILE',
-                              characters: content.length,
-                              content: content,
-                            } as StateSourceType);
-                          });
-                      }
-                    })
-                    .catch((err) => resolve({} as StateSourceType));
-                } else resolve({} as StateSourceType);
-              } else if (file.type === 'text/plain') {
-                const arrayBuffer = event.target?.result;
-                if (arrayBuffer instanceof ArrayBuffer) {
-                  const decoder = new TextDecoder('utf-8');
-                  const text = decoder.decode(arrayBuffer);
-                  resolve({
-                    key: uuidv4(),
-                    name: file.name,
-                    type: 'FILE',
-                    characters: text.length,
-                    content: text,
-                  } as StateSourceType);
-                }
-              } else {
-                resolve({} as StateSourceType);
-              }
-            };
-            reader.readAsArrayBuffer(file);
-          });
-        };
-        Promise.all(files.map((file) => loadFile(file)))
+        Promise.all(files.map((file) => parseFile(file)))
           .then((sources) => {
             setStateSources({
               ...stateSources,
