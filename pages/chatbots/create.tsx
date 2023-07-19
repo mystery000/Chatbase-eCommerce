@@ -17,10 +17,11 @@ import mammoth from 'mammoth';
 import validator from 'validator';
 import { v4 as uuidv4 } from 'uuid';
 import toast from 'react-hot-toast';
-import { Trash2, Upload } from 'lucide-react';
 import { pluralize } from '@/lib/utils';
 import { createChatbot } from '@/lib/api';
+import { ClipLoader } from 'react-spinners';
 import { useDropzone } from 'react-dropzone';
+import { Trash2, Upload } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import useChatbots from '@/lib/hooks/use-chatbots';
@@ -63,6 +64,7 @@ const CreateChatbot: FC = () => {
     useState<string>('');
   const [dragging, setDragging] = useState(false);
   const [loading, setLoading] = useState<boolean>(false);
+  const [parsing, setParsing] = useState<boolean>(false);
   const [crawlingWebsite, setCrawlingWebsite] = useState<boolean>(false);
   const [crawlingSitemap, setCrawlingSitemap] = useState<boolean>(false);
   const { chatbots, mutate: mutateChatbots } = useChatbots();
@@ -91,10 +93,12 @@ const CreateChatbot: FC = () => {
     onDrop: () => {
       setDragging(false);
     },
+    disabled: parsing,
   });
 
   useEffect(() => {
     if (acceptedFiles?.length > 0) {
+      setParsing(true);
       Promise.all(
         acceptedFiles.map(async (file) => {
           return file;
@@ -199,15 +203,17 @@ const CreateChatbot: FC = () => {
             reader.readAsArrayBuffer(file);
           });
         };
-        Promise.all(files.map((file) => loadFile(file))).then((sources) => {
-          setStateSources({
-            ...stateSources,
-            files: [
-              ...(stateSources?.files || []),
-              ...sources.filter((source) => source.key),
-            ],
-          });
-        });
+        Promise.all(files.map((file) => loadFile(file)))
+          .then((sources) => {
+            setStateSources({
+              ...stateSources,
+              files: [
+                ...(stateSources?.files || []),
+                ...sources.filter((source) => source.key),
+              ],
+            });
+          })
+          .then(() => setParsing(false));
       });
     }
   }, [acceptedFiles]);
@@ -258,7 +264,7 @@ const CreateChatbot: FC = () => {
         });
       }
       setCrawlingSitemap(false);
-      setWebsiteURL('');
+      setSitemapURL('');
     } catch (error) {
       console.log(error);
       toast.error(`Failed to crawl the website`);
@@ -286,7 +292,7 @@ const CreateChatbot: FC = () => {
         setLoading(false);
         return;
       }
-
+      console.log(stateSources);
       // const newChatbot = await createChatbot(
       //   name,
       //   pickedFiles || [],
@@ -341,7 +347,12 @@ const CreateChatbot: FC = () => {
                     {...getRootProps()}
                   >
                     <input {...getInputProps()} />
-                    <div className="flex flex-col items-center justify-center gap-4">
+                    <div
+                      className={cn(
+                        'flex flex-col items-center justify-center gap-4',
+                        { hidden: parsing },
+                      )}
+                    >
                       <Upload />
                       <div className="items-center justify-center text-center">
                         <p className="text-sm text-gray-600 ">
@@ -354,6 +365,14 @@ const CreateChatbot: FC = () => {
                           Supported File Types: .txt, .pdf, .doc, .docx, .odt,
                         </span>
                       </div>
+                    </div>
+                    <div
+                      className={cn(
+                        'flex flex-col items-center justify-center gap-4',
+                        { hidden: !parsing },
+                      )}
+                    >
+                      <ClipLoader color={'#a855f7'} />
                     </div>
                   </div>
                   <p
@@ -648,6 +667,7 @@ const CreateChatbot: FC = () => {
                   loading={loading}
                   loadingMessage="creando..."
                   onClick={handleSubmit}
+                  disabled={parsing}
                 >
                   Create Chatbot
                 </Button>

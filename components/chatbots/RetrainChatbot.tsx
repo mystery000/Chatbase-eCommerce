@@ -1,5 +1,5 @@
 import dynamic from 'next/dynamic';
-import { FC, useState, ChangeEvent, useEffect } from 'react';
+import { useState, ChangeEvent, useEffect } from 'react';
 
 import {
   Card,

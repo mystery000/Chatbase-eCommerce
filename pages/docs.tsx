@@ -9,7 +9,6 @@ export default function Docs() {
   return (
     <>
       <AppLayout>
-        d
         <div className="text-bold text-center text-3xl text-[#22c55e]">API</div>
       </AppLayout>
     </>
