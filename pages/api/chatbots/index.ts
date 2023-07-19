@@ -275,7 +275,6 @@ export default async function handler(
             true,
           ],
         });
-        console.log(chatbot);
         return res.status(SUCCESS).json(chatbot);
       } catch (error) {
         return res
