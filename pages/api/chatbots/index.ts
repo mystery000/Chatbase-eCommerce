@@ -19,9 +19,10 @@ import {
 // formidable
 import mime from 'mime';
 import { join } from 'path';
+import { mkdir, stat } from 'fs/promises';
 import { IncomingForm } from 'formidable';
 import { parseForm } from '@/lib/parse-form';
-import { StateSourceType, StateSourcesType } from '@/types/types';
+import { StateSourceType } from '@/types/types';
 
 type Data = { status?: string; error?: string } | Chatbot[] | Chatbot;
 
@@ -290,8 +291,24 @@ export default async function handler(
     const identifier = uuidv4();
     const prefix = 'images';
     const avatars: { chatbot?: string | null; profile?: string | null } = {};
+
+    const uploadDir = join(
+      process.env.ROOT_DIR || process.cwd(),
+      `/public/images`,
+    );
+    try {
+      await stat(uploadDir);
+    } catch (e: any) {
+      if (e.code === 'ENOENT') {
+        await mkdir(uploadDir, { recursive: true });
+      } else {
+        console.error(e);
+        return res.status(500).json({ error: 'Internal Server Error' });
+      }
+    }
+
     const form = new IncomingForm({
-      uploadDir: join(process.env.ROOT_DIR || process.cwd(), `/public/images`),
+      uploadDir,
       filename: (_name, _ext, part) => {
         const filename = `${identifier}-${_name}.${
           mime.getExtension(part.mimetype || '') || 'unknown'
@@ -306,6 +323,7 @@ export default async function handler(
       },
       filter: (part) => part.mimetype?.startsWith('image/') || false,
     });
+
     form.parse(req, async (err, fields, files) => {
       if (err) {
         console.error(err);

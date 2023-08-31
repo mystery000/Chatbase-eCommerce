@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { StateSourceType } from '@/types/types';
 import { getDocument } from 'pdfjs-dist/build/pdf';
 import { TextItem } from 'pdfjs-dist/types/src/display/api';
+import { extractTextByServer } from './api';
 
 export const parseFile = async (file: File) => {
   return new Promise<StateSourceType>((resolve) => {
@@ -33,9 +34,18 @@ export const parseFile = async (file: File) => {
           }
         });
       } else if (file.type === 'application/msword') {
-        // console.log(file);
-
-        resolve({} as StateSourceType);
+        try {
+          const extractedText = await extractTextByServer(file);
+          resolve({
+            key: uuidv4(),
+            name: file.name,
+            type: 'FILE',
+            characters: extractedText.length,
+            content: extractedText,
+          } as StateSourceType);
+        } catch (error) {
+          console.log(error);
+        }
       } else if (
         file.type ===
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document'

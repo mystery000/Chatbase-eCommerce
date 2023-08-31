@@ -64,3 +64,13 @@ export const updateChatbotSettings = async (
 
   return getResponseOrThrow<any>(res);
 };
+
+export const extractTextByServer = async (file: File) => {
+  const payload = new FormData();
+  payload.append('documents', file);
+  const res = await fetch(`/api/extract`, {
+    method: 'POST',
+    body: payload,
+  });
+  return getResponseOrThrow<any>(res);
+};
