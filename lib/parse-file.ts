@@ -33,6 +33,8 @@ export const parseFile = async (file: File) => {
           }
         });
       } else if (file.type === 'application/msword') {
+        // console.log(file);
+
         resolve({} as StateSourceType);
       } else if (
         file.type ===

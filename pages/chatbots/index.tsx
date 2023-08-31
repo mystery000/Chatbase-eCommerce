@@ -37,7 +37,7 @@ export default function Chatbots() {
               </Button>
             </Link>
           </div>
-          <div className="flex flex-wrap justify-start gap-12">
+          <div className="flex flex-wrap justify-stretch gap-12 ">
             {chatbots?.map((chatbot) => (
               <ChatbotCard
                 key={`chatbot-card-${chatbot.chatbot_id}`}
