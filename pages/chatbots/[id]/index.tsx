@@ -1,4 +1,5 @@
 import { useState, useCallback, ChangeEvent, useEffect } from 'react';
+
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
 import { Slider } from '@/components/ui/slider';
@@ -48,11 +49,12 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'react-hot-toast';
-import { deleteChatbot, updateChatbotSettings } from '@/lib/api';
+import { BASE_URL } from '@/config/app';
 import useChatbot from '@/lib/hooks/use-chatbot';
 import useSources from '@/lib/hooks/use-sources';
-import { Chatbot, Contact } from '@/types/database';
 import useChatbots from '@/lib/hooks/use-chatbots';
+import { Chatbot, Contact } from '@/types/database';
+import { deleteChatbot, updateChatbotSettings } from '@/lib/api';
 
 const Chatbot = () => {
   const [openDeleteDialog, setOpenDeleteDialog] = useState<boolean>(false);
@@ -210,7 +212,7 @@ const Chatbot = () => {
                         <code>
                           {`
                             <iframe
-                              src="http://localhost:3000/chatbot-iframe/${chatbot?.chatbot_id}"
+                              src="${BASE_URL}/chatbot-iframe/${chatbot?.chatbot_id}"
                               width="100%"
                               style="height: 100%; min-height: 700px"
                               frameborder="0"
@@ -281,7 +283,7 @@ const Chatbot = () => {
                         </DialogHeader>
                         <pre className="overflow-auto whitespace-normal rounded bg-slate-100 p-2 text-xs">
                           <code>
-                            {`http://localhost:3000/chatbot-iframe/${chatbot?.chatbot_id}`}
+                            {`${BASE_URL}/chatbot-iframe/${chatbot?.chatbot_id}`}
                           </code>
                         </pre>
                       </DialogContent>
