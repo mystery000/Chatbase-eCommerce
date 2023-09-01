@@ -102,7 +102,7 @@ const CreateChatbot: FC = () => {
           .then(() => setParsing(false));
       });
     }
-  }, [acceptedFiles, stateSources]);
+  }, [acceptedFiles]);
 
   const handleCrawlWebsite = useCallback(async () => {
     if (!websiteURL || invalidWebsiteMessage) return;

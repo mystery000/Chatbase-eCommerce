@@ -60,10 +60,11 @@ export default async function handler(
         }
         const filePath = `${uploadDir}/${tempId}.doc`;
         textract.fromFileWithPath(filePath, (error, text) => {
-          fs.unlink(filePath, (err) => {
-            console.log(err);
-            return res.status(500).json({ error: 'Internal server error' });
-          });
+          fs.unlinkSync(filePath); // Delete the uploaded file
+          if (error) {
+            console.error(error);
+            return res.status(500).json({ error: 'Internal Server Error' });
+          }
           return res.status(200).json(text);
         });
       });

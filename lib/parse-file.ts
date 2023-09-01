@@ -45,6 +45,7 @@ export const parseFile = async (file: File) => {
           } as StateSourceType);
         } catch (error) {
           console.log(error);
+          resolve({} as StateSourceType);
         }
       } else if (
         file.type ===
