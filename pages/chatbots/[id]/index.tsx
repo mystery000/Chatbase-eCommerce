@@ -1,5 +1,6 @@
 import { useState, useCallback, ChangeEvent, useEffect } from 'react';
 
+import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
 import { Slider } from '@/components/ui/slider';
@@ -42,6 +43,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
+import { APP_URL } from '@/config/app';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
@@ -49,7 +51,6 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'react-hot-toast';
-import { BASE_URL } from '@/config/app';
 import useChatbot from '@/lib/hooks/use-chatbot';
 import useSources from '@/lib/hooks/use-sources';
 import useChatbots from '@/lib/hooks/use-chatbots';
@@ -212,7 +213,7 @@ const Chatbot = () => {
                         <code>
                           {`
                             <iframe
-                              src="${BASE_URL}/chatbot-iframe/${chatbot?.chatbot_id}"
+                              src="${APP_URL}/chatbot-iframe/${chatbot?.chatbot_id}"
                               width="100%"
                               style="height: 100%; min-height: 700px"
                               frameborder="0"
@@ -252,8 +253,8 @@ const Chatbot = () => {
                               Require login for someone to use your chatbot{' '}
                             </span>
                             <span className="text-gray-500">
-                              (If you don't require login, the message credits
-                              they use will count for your account)
+                              {`(If you don't require login, the message credits
+                              they use will count for your account)`}
                             </span>
                           </Label>
                         </div>
@@ -283,7 +284,7 @@ const Chatbot = () => {
                         </DialogHeader>
                         <pre className="overflow-auto whitespace-normal rounded bg-slate-100 p-2 text-xs">
                           <code>
-                            {`${BASE_URL}/chatbot-iframe/${chatbot?.chatbot_id}`}
+                            {`${APP_URL}/chatbot-iframe/${chatbot?.chatbot_id}`}
                           </code>
                         </pre>
                       </DialogContent>
@@ -436,19 +437,19 @@ const Chatbot = () => {
                         </SelectContent>
                       </Select>
                       <p className="mt-2 text-sm text-zinc-500">
-                        'Private': No one can access your chatbot except you
-                        (your account)
+                        {` 'Private': No one can access your chatbot except you
+                        (your account)`}
                       </p>
                       <p className="mt-2 text-sm text-zinc-500">
-                        'Private but can be embedded on website': Other people
+                        {`'Private but can be embedded on website': Other people
                         can't access your chatbot if you send them the link, but
                         you can still embed it on your website and your website
                         visitors will be able to use it. (make sure to set your
-                        domains)
+                        domains)`}
                       </p>
                       <p className="mt-2 text-sm text-zinc-500">
-                        'Public': Anyone with the link can access it on
-                        chatbase.co and can be embedded on your website.
+                        {`'Public': Anyone with the link can access it on
+                        chatbase.co and can be embedded on your website.`}
                       </p>
                       <p className="mt-2 text-sm text-zinc-500">
                         Set to public if you want to be able to send a link of
@@ -831,13 +832,16 @@ const Chatbot = () => {
                               </label>
                               <Card>
                                 <CardContent className="p-0">
-                                  <img
+                                  <Image
                                     src={
                                       chatbotIcon ||
-                                      `${router.basePath}/${stateChatbot.chatbot_icon}`
+                                      `/${stateChatbot.chatbot_icon}`
                                     }
                                     className="mx-auto h-40 w-40 rounded-t-sm border-none object-cover"
                                     loading="lazy"
+                                    width={160}
+                                    height={160}
+                                    alt="Icon of the chatbot"
                                   />
                                 </CardContent>
                                 <CardFooter className="select-none p-2">

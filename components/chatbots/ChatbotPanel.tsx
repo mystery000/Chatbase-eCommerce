@@ -6,6 +6,7 @@ import {
   useRef,
   useEffect,
 } from 'react';
+import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import { toast } from 'react-hot-toast';
 import { Message } from '@/types/types';
@@ -14,6 +15,7 @@ import { SendIcon } from '../icons/Send';
 import { chatCompletion } from '@/lib/api';
 import { Chatbot, Contact } from '@/types/database';
 import { Card, CardContent } from '@/components/ui/card';
+
 const AIMessage = dynamic(() => import('../message/AIMessage'));
 const ClientMessage = dynamic(() => import('../message/ClientMessage'));
 
@@ -138,12 +140,12 @@ const ChatbotPanel = ({
             <div className="mb-4 flex justify-between border-b bg-white py-2">
               <div className="flex items-center">
                 {chatbot.active_profile_icon ? (
-                  <img
+                  <Image
                     className="m-1 rounded-full"
-                    alt="profile picture"
+                    alt="Picture of the profile"
                     width={36}
                     height={36}
-                    src={profileIcon}
+                    src={`${profileIcon}`}
                     loading={'lazy'}
                   />
                 ) : (

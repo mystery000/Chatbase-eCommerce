@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 
 import {
   NavigationMenu,
@@ -77,12 +78,12 @@ export default function AppLayout({ children }: LayoutProps) {
                   className="text-sm font-semibold leading-6 text-gray-900"
                   href="/account"
                 >
-                  <img
+                  <Image
                     className="m-1 rounded-full border-2"
-                    alt="profile picture"
+                    src="/static/profile_default_icon.jpeg"
                     width={36}
                     height={36}
-                    src="/static/profile_default_icon.jpeg"
+                    alt="profile picture"
                   />
                 </a>
               </div>

@@ -102,7 +102,7 @@ const CreateChatbot: FC = () => {
           .then(() => setParsing(false));
       });
     }
-  }, [acceptedFiles]);
+  }, [acceptedFiles, stateSources]);
 
   const handleCrawlWebsite = useCallback(async () => {
     if (!websiteURL || invalidWebsiteMessage) return;
@@ -129,7 +129,7 @@ const CreateChatbot: FC = () => {
       toast.error(`Failed to crawl the website`);
       setCrawlingWebsite(false);
     }
-  }, [websiteURL, invalidWebsiteMessage]);
+  }, [websiteURL, invalidWebsiteMessage, stateSources]);
 
   const handleCrawlSitemap = useCallback(async () => {
     if (!sitemapURL || invalidSitemapMessage) return;
@@ -156,7 +156,7 @@ const CreateChatbot: FC = () => {
       toast.error(`Failed to crawl the website`);
       setCrawlingSitemap(false);
     }
-  }, [sitemapURL, invalidSitemapMessage]);
+  }, [sitemapURL, invalidSitemapMessage, stateSources]);
 
   const hasFiles = stateSources?.files?.length || false;
   const hasText = stateSources?.text?.characters || false;
@@ -189,7 +189,7 @@ const CreateChatbot: FC = () => {
       setLoading(false);
       console.log('Error', error);
     }
-  }, [name, hasSources, stateSources]);
+  }, [name, hasSources, stateSources, chatbots, mutateChatbots, router]);
 
   const fileChars =
     stateSources?.files?.reduce((sum, file) => sum + file.characters, 0) || 0;
@@ -254,9 +254,9 @@ const CreateChatbot: FC = () => {
                     className="mt-1 text-center text-sm text-gray-500 dark:text-gray-300"
                     id="file_input_help"
                   >
-                    NOTE: Uploading a PDF using safari doesn't work, we're
+                    {`NOTE: Uploading a PDF using safari doesn't work, we're
                     looking into the issue. Make sure the text is OCR'd, i.e.
-                    you can copy it.
+                    you can copy it.`}
                   </p>
                   {hasFiles && (
                     <div className="pt-8">

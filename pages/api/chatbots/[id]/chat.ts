@@ -1,13 +1,13 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { OpenAIEmbeddings } from 'langchain/embeddings/openai';
-import { PineconeStore } from 'langchain/vectorstores/pinecone';
-import { makeChain } from '@/lib/pinecone/makechain';
-import { pinecone } from '@/lib/pinecone/pinecone-client';
-import { PINECONE_INDEX_NAME } from '@/config/pinecone';
-import { BAD_METHOD, BAD_REQUEST, ERROR } from '@/config/HttpStatus';
-import rateLimiterMiddleware from '@/lib/middleware/rate-limit';
 import excuteQuery from '@/lib/mysql';
 import { Chatbot } from '@/types/database';
+import { makeChain } from '@/lib/pinecone/makechain';
+import { PINECONE_INDEX_NAME } from '@/config/pinecone';
+import { pinecone } from '@/lib/pinecone/pinecone-client';
+import { OpenAIEmbeddings } from 'langchain/embeddings/openai';
+import { PineconeStore } from 'langchain/vectorstores/pinecone';
+import rateLimiterMiddleware from '@/lib/middleware/rate-limit';
+import { BAD_METHOD, BAD_REQUEST, ERROR } from '@/config/HttpStatus';
 
 export default async function handler(
   req: NextApiRequest,
