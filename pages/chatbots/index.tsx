@@ -6,9 +6,7 @@ const PacmanLoader = dynamic(() => import('@/components/loaders/PacmanLoader'));
 const AppLayout = dynamic(() => import('@/components/layouts/AppLayout'), {
   loading: () => <PacmanLoader />,
 });
-const ChatbotCard = dynamic(() => import('@/components/chatbots/ChatbotCard'), {
-  loading: () => <PacmanLoader />,
-});
+const ChatbotCard = dynamic(() => import('@/components/chatbots/ChatbotCard'));
 
 import Button from '@/components/ui/buttoneEx';
 import useChatbots from '@/lib/hooks/use-chatbots';

@@ -55,7 +55,7 @@ const CreateChatbot: FC = () => {
   const { chatbots, mutate: mutateChatbots } = useChatbots();
   const [stateSources, setStateSources] = useState<StateSourcesType>();
 
-  const { getRootProps, getInputProps, acceptedFiles } = useDropzone({
+  const { getRootProps, getInputProps, acceptedFiles, inputRef } = useDropzone({
     noClick: false,
     noKeyboard: true,
     maxFiles: MAX_FILES,
@@ -99,10 +99,15 @@ const CreateChatbot: FC = () => {
               ],
             });
           })
-          .then(() => setParsing(false));
+          .then(() => setParsing(false))
+          .finally(() => {
+            acceptedFiles.length = 0;
+            acceptedFiles.slice(0, 0);
+            if (inputRef.current) inputRef.current.value = '';
+          });
       });
     }
-  }, [acceptedFiles]);
+  }, [acceptedFiles, stateSources, inputRef]);
 
   const handleCrawlWebsite = useCallback(async () => {
     if (!websiteURL || invalidWebsiteMessage) return;
