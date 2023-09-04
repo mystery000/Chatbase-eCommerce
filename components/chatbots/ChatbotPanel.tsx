@@ -145,7 +145,7 @@ const ChatbotPanel = ({
                     alt="Picture of the profile"
                     width={36}
                     height={36}
-                    src={`${profileIcon}`}
+                    src={profileIcon || ''}
                     loading={'lazy'}
                   />
                 ) : (

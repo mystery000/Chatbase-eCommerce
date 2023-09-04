@@ -237,6 +237,8 @@ export default async function handler(
           initial_messages,
         } = DEFAULT_CONFIG_VALUES;
 
+        const { chatbotIcon, profileIcon } = DEFAULT_ICONS_PATH;
+
         const chatbot: Chatbot = {
           chatbot_id,
           name,
@@ -251,9 +253,9 @@ export default async function handler(
           initial_messages,
           contact: DEFAULT_CONTACT_INFO,
           active_profile_icon: true,
+          chatbot_icon: chatbotIcon,
+          profile_icon: profileIcon,
         };
-
-        const { chatbotIcon, profileIcon } = DEFAULT_ICONS_PATH;
 
         await excuteQuery({
           query:
@@ -289,7 +291,7 @@ export default async function handler(
     }
   } else if (req.method === 'PATCH') {
     const identifier = uuidv4();
-    const prefix = 'images';
+    const prefix = '/images';
     const avatars: { chatbot?: string | null; profile?: string | null } = {};
 
     const uploadDir = join(

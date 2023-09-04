@@ -76,7 +76,7 @@ const Chatbot = () => {
     isLoading: isLoadingChatbot,
     mutate: mutateChatbot,
   } = useChatbot();
-
+  console.log(chatbot);
   const { mutate: mutateChatbots } = useChatbots();
 
   const {
@@ -321,7 +321,7 @@ const Chatbot = () => {
               <ChatbotPanel
                 chatbot={chatbot}
                 playing={true}
-                profileIcon={`${router.basePath}/${stateChatbot.profile_icon}`}
+                profileIcon={stateChatbot.profile_icon}
                 initialMessages={chatbot.initial_messages}
               />
             </TabsContent>
@@ -829,10 +829,7 @@ const Chatbot = () => {
                             <Card>
                               <CardContent className="p-0">
                                 <Image
-                                  src={
-                                    chatbotIcon ||
-                                    `/${stateChatbot.chatbot_icon}`
-                                  }
+                                  src={chatbotIcon || stateChatbot.chatbot_icon}
                                   className="mx-auto h-40 w-40 rounded-t-sm border-none object-cover"
                                   loading="lazy"
                                   width={160}
@@ -857,10 +854,7 @@ const Chatbot = () => {
                               stateChatbot.contact,
                             ) as unknown as Contact,
                           }}
-                          profileIcon={
-                            profileIcon ||
-                            `${router.basePath}/${stateChatbot.profile_icon}`
-                          }
+                          profileIcon={profileIcon || stateChatbot.profile_icon}
                           initialMessages={stateChatbot.initial_messages}
                         />
                       </div>

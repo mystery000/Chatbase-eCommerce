@@ -23,7 +23,7 @@ const SharedChatbot: FC = () => {
       <ChatbotPanel
         chatbot={chatbot}
         playing={true}
-        profileIcon={`${router.basePath}/${chatbot.profile_icon}`}
+        profileIcon={chatbot.profile_icon}
         initialMessages={chatbot.initial_messages}
       />
     </>

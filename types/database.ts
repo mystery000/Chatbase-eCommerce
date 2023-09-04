@@ -24,8 +24,8 @@ export type Chatbot = {
   ip_limit: number;
   ip_limit_message: string;
   ip_limit_timeframe: number;
-  chatbot_icon?: string;
-  profile_icon?: string;
+  chatbot_icon: string;
+  profile_icon: string;
   active_profile_icon: boolean;
   contact: Contact;
   initial_messages?: string;

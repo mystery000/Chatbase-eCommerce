@@ -17,7 +17,7 @@ const ChatbotCard: FC<ChatbotProps> = ({ chatbot }) => {
       <Card>
         <CardContent className="p-0">
           <Image
-            src={`/${chatbot?.chatbot_icon}`}
+            src={chatbot.chatbot_icon}
             className="h-44 w-44 rounded-t-sm border-none object-cover"
             loading="lazy"
             width={156}
