@@ -76,7 +76,6 @@ const Chatbot = () => {
     isLoading: isLoadingChatbot,
     mutate: mutateChatbot,
   } = useChatbot();
-  console.log(chatbot);
   const { mutate: mutateChatbots } = useChatbots();
 
   const {
