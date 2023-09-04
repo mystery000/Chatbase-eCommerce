@@ -23,6 +23,7 @@ import { mkdir, stat } from 'fs/promises';
 import { IncomingForm } from 'formidable';
 import { parseForm } from '@/lib/parse-form';
 import { StateSourceType } from '@/types/types';
+import { parseImages } from '@/lib/parse-images';
 
 type Data = { status?: string; error?: string } | Chatbot[] | Chatbot;
 
@@ -290,75 +291,34 @@ export default async function handler(
         .json({ error: `Failed to create the chatbot due to ${error}` });
     }
   } else if (req.method === 'PATCH') {
-    const identifier = uuidv4();
-    const prefix = '/images';
-    const avatars: { chatbot?: string | null; profile?: string | null } = {};
-
-    const uploadDir = join(
-      process.env.ROOT_DIR || process.cwd(),
-      `/public/images`,
-    );
+    const { fields, files, avatars } = await parseImages(req);
+    const chatbot: Chatbot = JSON.parse(fields.chatbot[0]) as Chatbot;
     try {
-      await stat(uploadDir);
-    } catch (e: any) {
-      if (e.code === 'ENOENT') {
-        await mkdir(uploadDir, { recursive: true });
-      } else {
-        console.error(e);
-        return res.status(500).json({ error: 'Internal Server Error' });
-      }
+      await excuteQuery({
+        query: 'UPDATE chatbots SET ? WHERE chatbot_id=(?)',
+        values: [
+          {
+            name: chatbot.name,
+            promptTemplate: chatbot.promptTemplate,
+            model: chatbot.model,
+            temperature: chatbot.temperature,
+            visibility: chatbot.visibility,
+            ip_limit: chatbot.ip_limit,
+            ip_limit_message: chatbot.ip_limit_message,
+            ip_limit_timeframe: chatbot.ip_limit_timeframe,
+            initial_messages: chatbot.initial_messages,
+            chatbot_icon: avatars.chatbot || chatbot.chatbot_icon,
+            profile_icon: avatars.profile || chatbot.profile_icon,
+            active_profile_icon: chatbot.active_profile_icon,
+            contact: JSON.stringify(chatbot.contact),
+          },
+          chatbot.chatbot_id,
+        ],
+      });
+    } catch (error) {
+      console.log(error);
+      return res.status(500).json({ error: 'Internal Server Error' });
     }
-
-    const form = new IncomingForm({
-      uploadDir,
-      filename: (_name, _ext, part) => {
-        const filename = `${identifier}-${_name}.${
-          mime.getExtension(part.mimetype || '') || 'unknown'
-        }`;
-        if (!part.mimetype?.startsWith('image')) return filename;
-        if (part.name === 'avatar_chatbot') {
-          avatars.chatbot = `${prefix}/${filename}`;
-        } else {
-          avatars.profile = `${prefix}/${filename}`;
-        }
-        return filename;
-      },
-      filter: (part) => part.mimetype?.startsWith('image/') || false,
-    });
-
-    form.parse(req, async (err, fields, files) => {
-      if (err) {
-        console.error(err);
-        return res.status(500).json({ error: 'Internal Server Error' });
-      }
-      const chatbot: Chatbot = JSON.parse(fields.chatbot[0]) as Chatbot;
-      try {
-        await excuteQuery({
-          query: 'UPDATE chatbots SET ? WHERE chatbot_id=(?)',
-          values: [
-            {
-              name: chatbot.name,
-              promptTemplate: chatbot.promptTemplate,
-              model: chatbot.model,
-              temperature: chatbot.temperature,
-              visibility: chatbot.visibility,
-              ip_limit: chatbot.ip_limit,
-              ip_limit_message: chatbot.ip_limit_message,
-              ip_limit_timeframe: chatbot.ip_limit_timeframe,
-              initial_messages: chatbot.initial_messages,
-              chatbot_icon: avatars.chatbot || chatbot.chatbot_icon,
-              profile_icon: avatars.profile || chatbot.profile_icon,
-              active_profile_icon: chatbot.active_profile_icon,
-              contact: JSON.stringify(chatbot.contact),
-            },
-            chatbot.chatbot_id,
-          ],
-        });
-      } catch (error) {
-        console.log(error);
-        return res.status(500).json({ error: 'Internal Server Error' });
-      }
-    });
     return res.status(SUCCESS).json({ status: 'ok' });
   }
   return res.status(SUCCESS).json({ status: 'ok' });
