@@ -102,7 +102,7 @@ export default async function handler(
             (_, i) => `${source.key}-${i}`,
           );
 
-          await pineconeStore.addDocuments(docs, vectorIds);
+          pineconeStore.addDocuments(docs, vectorIds);
 
           // Insert source on database
           await excuteQuery({
