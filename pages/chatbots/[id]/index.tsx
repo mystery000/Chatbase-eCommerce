@@ -873,7 +873,7 @@ const Chatbot = () => {
             </TabsContent>
             <TabsContent value="manage-sources">
               <Card>
-                <RetrainChatbot />
+                <RetrainChatbot chatbotId={chatbot.chatbot_id} />
               </Card>
             </TabsContent>
           </Tabs>

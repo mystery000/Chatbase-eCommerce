@@ -29,6 +29,17 @@ export const createChatbot = async (
   return getResponseOrThrow<Chatbot>(res);
 };
 
+export const retrainChatbot = async (
+  chatbotId: string,
+  sources: StateSourcesType,
+) => {
+  const res = await fetch(`/api/chatbots/${chatbotId}/sources`, {
+    method: 'PATCH',
+    body: JSON.stringify({ data: sources }),
+  });
+  return getResponseOrThrow<any>(res);
+};
+
 export const deleteChatbot = async (chatbotId: string) => {
   const res = await fetch(`/api/chatbots/${chatbotId}`, {
     method: 'DELETE',

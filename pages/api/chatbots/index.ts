@@ -16,11 +16,6 @@ import {
   DEFAULT_ICONS_PATH,
 } from '@/config/chabot';
 
-// formidable
-import mime from 'mime';
-import { join } from 'path';
-import { mkdir, stat } from 'fs/promises';
-import { IncomingForm } from 'formidable';
 import { parseForm } from '@/lib/parse-form';
 import { StateSourceType } from '@/types/types';
 import { parseImages } from '@/lib/parse-images';
