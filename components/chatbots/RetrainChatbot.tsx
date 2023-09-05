@@ -569,6 +569,7 @@ const RetrainChatbot: NextPage<{ chatbotId: string }> = ({ chatbotId }) => {
               loadingMessage="Traning..."
               variant={'plain'}
               onClick={handleRetrain}
+              disabled={training}
             >
               {training ? 'Training...' : 'Retrain Chatbot'}
             </Button>

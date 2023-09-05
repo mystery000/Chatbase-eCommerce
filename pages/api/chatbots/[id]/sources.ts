@@ -101,7 +101,8 @@ export default async function handler(
             { length: docs.length },
             (_, i) => `${source.key}-${i}`,
           );
-          pineconeStore.addDocuments(docs, vectorIds);
+
+          await pineconeStore.addDocuments(docs, vectorIds);
 
           // Insert source on database
           await excuteQuery({
@@ -132,10 +133,12 @@ export default async function handler(
             (_, i) => `${source.source_id}-${i}`,
           );
 
-          index.delete1({
-            ids: vectorIds,
-            namespace: chatbotId,
-          });
+          for (let i = 0; i < vectorIds.length; i += 1000) {
+            await index.delete1({
+              ids: vectorIds.slice(i, i + 1000),
+              namespace: chatbotId,
+            });
+          }
 
           // Delete source from database
           await excuteQuery({

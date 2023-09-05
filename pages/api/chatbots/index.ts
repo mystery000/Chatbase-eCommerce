@@ -106,7 +106,7 @@ export default async function handler(
           for (let i = 0; i < docs.length; i++)
             vector_ids.push(`${sourceId}-${i}`);
 
-          pineconeStore.addDocuments(docs, vector_ids);
+          await pineconeStore.addDocuments(docs, vector_ids);
 
           await excuteQuery({
             query:
@@ -134,7 +134,7 @@ export default async function handler(
               for (let i = 0; i < docs.length; i++)
                 vector_ids.push(`${sourceId}-${i}`);
 
-              pineconeStore.addDocuments(docs, vector_ids);
+              await pineconeStore.addDocuments(docs, vector_ids);
 
               await excuteQuery({
                 query:
@@ -166,7 +166,7 @@ export default async function handler(
               for (let i = 0; i < docs.length; i++)
                 vector_ids.push(`${sourceId}-${i}`);
 
-              pineconeStore.addDocuments(docs, vector_ids);
+              await pineconeStore.addDocuments(docs, vector_ids);
 
               await excuteQuery({
                 query:
@@ -198,7 +198,7 @@ export default async function handler(
               for (let i = 0; i < docs.length; i++)
                 vector_ids.push(`${sourceId}-${i}`);
 
-              pineconeStore.addDocuments(docs, vector_ids);
+              await pineconeStore.addDocuments(docs, vector_ids);
 
               await excuteQuery({
                 query:
